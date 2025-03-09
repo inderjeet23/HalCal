@@ -52,6 +52,13 @@ struct IntegratedTabCardView<CardContent: View>: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
+                // Tab bar with plus button - always visible at bottom on top of card
+                TabBarWithContextualAdd(
+                    selectedTab: $selectedTab,
+                    addAction: addAction
+                )
+                .zIndex(1) // Make sure tab bar is always on top
+                
                 // Card content - slides up from behind tab bar when visible
                 if offset > 0 {
                     VStack(spacing: 0) {
@@ -65,21 +72,15 @@ struct IntegratedTabCardView<CardContent: View>: View {
                         
                         // Dynamic card content
                         cardContent
-                            .padding(.bottom, tabBarHeight) // Add padding to account for tab bar
+                            .padding(.bottom, 20) // Small padding at bottom of card content
                     }
                     .background(Color.white)
                     .cornerRadius(Constants.Layout.cornerRadius, corners: [.topLeft, .topRight])
                     .shadow(color: Color.black.opacity(0.1), radius: 4, y: -2)
-                    .offset(y: -offset)
+                    .offset(y: geometry.size.height - offset)
+                    .frame(maxHeight: offset) // Limit card height to offset value
                     .zIndex(0) // Place behind tab bar
                 }
-                
-                // Tab bar with plus button - always visible at bottom on top of card
-                TabBarWithContextualAdd(
-                    selectedTab: $selectedTab,
-                    addAction: addAction
-                )
-                .zIndex(1) // Make sure tab bar is always on top
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
             .gesture(

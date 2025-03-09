@@ -24,6 +24,9 @@ struct TabBarWithContextualAdd: View {
     @Binding var selectedTab: TabItem
     let addAction: () -> Void
     
+    // Define colors
+    private let addButtonColor = Color(red: 0.4, green: 0.85, blue: 0.3) // Bright Reddit-like green
+    
     var body: some View {
         ZStack {
             // Background
@@ -52,7 +55,7 @@ struct TabBarWithContextualAdd: View {
                 
                 // Spacer for center add button
                 Spacer()
-                    .frame(width: 70)
+                    .frame(width: 80)
                 
                 // Right tab (Hydration)
                 Button(action: { 
@@ -74,19 +77,19 @@ struct TabBarWithContextualAdd: View {
             }
             .padding(.horizontal, 40)
             .padding(.vertical, 12)
-            .padding(.bottom, 30) // Extra padding for bottom safe area
+            .padding(.bottom, 10) // Reduced padding for bottom safe area
             
-            // Centered add button (always in the middle)
+            // Centered add button (always in the middle) - Reddit-style
             Button(action: addAction) {
                 ZStack {
                     Circle()
-                        .fill(Constants.Colors.addButton)
-                        .frame(width: 60, height: 60)
-                        .shadow(color: Color.black.opacity(0.2),
-                               radius: 4, x: 0, y: 2)
+                        .fill(addButtonColor)
+                        .frame(width: 56, height: 56)
+                        .shadow(color: Color.black.opacity(0.15),
+                               radius: 3, x: 0, y: 1)
                     
                     Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 22, weight: .medium))
                         .foregroundColor(.white)
                 }
             }
