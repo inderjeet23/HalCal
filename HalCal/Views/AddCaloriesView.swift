@@ -136,7 +136,7 @@ struct AddCaloriesView: View {
                                 .background(
                                     selectedMealType == mealType ?
                                     currentInputMode.color :
-                                    Constants.Colors.cardBackground
+                                    Constants.Colors.surfaceMid
                                 )
                                 .cornerRadius(Constants.Layout.cornerRadius)
                         }

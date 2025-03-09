@@ -96,7 +96,7 @@ struct CaloriesView: View {
                 )
             }
             .padding()
-            .background(Constants.Colors.cardBackground)
+            .background(Constants.Colors.surfaceMid)
             .cornerRadius(Constants.Layout.cornerRadius)
             .padding(.horizontal)
             
