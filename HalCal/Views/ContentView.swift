@@ -22,16 +22,13 @@ struct ContentView: View {
     @StateObject private var hydrationModel = HydrationModel()
     @State private var selectedTab: TabItem = .calories
     @State private var showingAddSheet = false
+    @State private var previousCalorieTotal: Int = 0 // Track previous calorie total
     
     // Sample meals - in a real app, these would come from CalorieModel
-    @State private var meals: [Meal] = [
-        Meal(name: "Breakfast", calories: 450, time: Date().addingTimeInterval(-60*60*3), type: .breakfast),
-        Meal(name: "Protein Shake", calories: 200, time: Date().addingTimeInterval(-60*60*2), type: .snack),
-        Meal(name: "Lunch", calories: 650, time: Date().addingTimeInterval(-60*60), type: .lunch)
-    ]
+    @State private var meals: [Meal] = []
     
     // Tab bar height including safe area
-    private let tabBarHeight: CGFloat = 100
+    private let tabBarHeight: CGFloat = 80 // Updated to match the new tab bar height
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -131,19 +128,22 @@ struct ContentView: View {
             TabBarWithContextualAdd(
                 selectedTab: $selectedTab,
                 addAction: {
+                    // Store current calorie total before adding
+                    previousCalorieTotal = calorieModel.consumedCalories
                     showingAddSheet = true
                 }
             )
-            .background(Color.black.opacity(0.01)) // Tiny background to capture taps
+            .background(Color.clear) // No background needed with the new design
             .edgesIgnoringSafeArea(.bottom)
         }
         .sheet(isPresented: $showingAddSheet) {
             if selectedTab == .calories {
                 AddCaloriesView(calorieModel: calorieModel)
                     .onDisappear {
-                        // When sheet is dismissed, add a meal based on entered data
-                        if calorieModel.consumedCalories > 0 {
-                            addSampleMeal()
+                        // Only add a meal if calories were actually added during this session
+                        let caloriesAdded = calorieModel.consumedCalories - previousCalorieTotal
+                        if caloriesAdded > 0 {
+                            addMeal(calories: caloriesAdded)
                         }
                     }
             } else if selectedTab == .hydration {
@@ -209,18 +209,48 @@ struct ContentView: View {
         }
     }
     
-    // Add a sample meal for testing
-    private func addSampleMeal() {
+    // Add a meal with specific calories
+    private func addMeal(calories: Int) {
         withAnimation {
-            // Create a new meal based on the selected meal type
+            // Create a meal with the actual calories added
             let newMeal = Meal(
-                name: selectedTab == .calories ? "New Meal" : "Water",
-                calories: 300,
+                name: getMealNameBasedOnTime(),
+                calories: calories,
                 time: Date(),
-                type: .snack
+                type: getMealTypeBasedOnTime()
             )
             
             meals.append(newMeal)
+        }
+    }
+    
+    // Get appropriate meal name based on time of day
+    private func getMealNameBasedOnTime() -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        
+        if hour < 11 {
+            return "Breakfast"
+        } else if hour < 15 {
+            return "Lunch"
+        } else if hour < 20 {
+            return "Dinner"
+        } else {
+            return "Evening Snack"
+        }
+    }
+    
+    // Get appropriate meal type based on time of day
+    private func getMealTypeBasedOnTime() -> MealType {
+        let hour = Calendar.current.component(.hour, from: Date())
+        
+        if hour < 11 {
+            return .breakfast
+        } else if hour < 15 {
+            return .lunch
+        } else if hour < 20 {
+            return .dinner
+        } else {
+            return .snack
         }
     }
 }

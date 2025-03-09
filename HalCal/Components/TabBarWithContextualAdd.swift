@@ -29,8 +29,10 @@ struct TabBarWithContextualAdd: View {
     
     var body: some View {
         ZStack {
-            // Background
-            Color.white
+            // Background - more elegant rounded shape
+            RoundedRectangle(cornerRadius: 30)
+                .fill(Color.white)
+                .frame(height: 80)
                 .shadow(color: Color.black.opacity(0.1), radius: 3, y: -2)
             
             // Tab bar items
@@ -43,11 +45,11 @@ struct TabBarWithContextualAdd: View {
                 }) {
                     VStack(spacing: 4) {
                         Image(systemName: "flame.fill")
-                            .font(.system(size: 24))
+                            .font(.system(size: 22))
                             .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.5))
                         
                         Text("Calories")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.7))
                     }
                     .frame(maxWidth: .infinity)
@@ -65,19 +67,19 @@ struct TabBarWithContextualAdd: View {
                 }) {
                     VStack(spacing: 4) {
                         Image(systemName: "drop.fill")
-                            .font(.system(size: 24))
+                            .font(.system(size: 22))
                             .foregroundColor(selectedTab == .hydration ? Constants.Colors.turquoise : Color.gray.opacity(0.5))
                         
                         Text("Hydration")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(selectedTab == .hydration ? Constants.Colors.turquoise : Color.gray.opacity(0.7))
                     }
                     .frame(maxWidth: .infinity)
                 }
             }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 12)
-            .padding(.bottom, 10) // Reduced padding for bottom safe area
+            .padding(.horizontal, 50)
+            .padding(.vertical, 6)
+            .padding(.bottom, 20) // Bottom safe area padding
             
             // Centered add button (always in the middle) - Reddit-style
             Button(action: addAction) {
@@ -95,7 +97,7 @@ struct TabBarWithContextualAdd: View {
             }
             .offset(y: -30) // Position button properly above tab bar
         }
-        .frame(height: 100) // Set the overall height of the tab bar
+        .frame(height: 80) // Skinnier height
     }
 }
 
