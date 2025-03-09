@@ -44,6 +44,16 @@ enum InputMode: String, CaseIterable, Identifiable {
         case .protein, .carbs, .fat: return Constants.Colors.turquoise
         }
     }
+    
+    // Title text for header
+    var headerText: String {
+        switch self {
+        case .calories: return "ADD CALORIES"
+        case .protein: return "ADD PROTEIN"
+        case .carbs: return "ADD CARBS"
+        case .fat: return "ADD FAT"
+        }
+    }
 }
 
 struct AddCaloriesView: View {
@@ -63,6 +73,10 @@ struct AddCaloriesView: View {
     
     // Create a custom transition manager
     private let transitionManager = CustomTransitionManager()
+    
+    // Define fixed sizes for consistent UI
+    private let selectorHeight: CGFloat = 54
+    private let keypadButtonSize: CGFloat = 70
     
     var body: some View {
         ZStack {
@@ -101,7 +115,8 @@ struct AddCaloriesView: View {
                     
                     Spacer()
                     
-                    Text("ADD CALORIES")
+                    // Dynamic header based on selected input mode
+                    Text(currentInputMode.headerText)
                         .font(Constants.Fonts.sectionHeader)
                         .foregroundColor(Constants.Colors.primaryText)
                         .tracking(2)
@@ -116,11 +131,11 @@ struct AddCaloriesView: View {
                 .padding(.horizontal, Constants.Layout.screenMargin)
                 .padding(.top, Constants.Layout.screenMargin)
                 
-                // Meal type selector
+                // Meal type selector - larger size
                 mealTypeSelector()
                     .padding(.horizontal, Constants.Layout.screenMargin)
                 
-                // Macro mode selector
+                // Macro mode selector - larger size
                 macroTabSelector()
                     .padding(.horizontal, Constants.Layout.screenMargin)
                     .padding(.top, 8)
@@ -129,9 +144,9 @@ struct AddCaloriesView: View {
                 displayPanel()
                     .padding(.horizontal, Constants.Layout.screenMargin)
                 
-                Spacer(minLength: 30) // Push keypad down
+                Spacer(minLength: 20) // Push keypad down
                 
-                // Large keypad
+                // Large keypad with fixed-size buttons
                 VStack(spacing: Constants.Layout.componentSpacing) {
                     HStack(spacing: Constants.Layout.componentSpacing) {
                         keypadButton("1")
@@ -223,19 +238,19 @@ struct AddCaloriesView: View {
                         }
                         
                         Text(mealType.rawValue)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(selectedMealType == mealType ? .white : Color.gray)
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 12)
                     .frame(maxWidth: .infinity)
                     .background(selectedMealType == mealType ? Constants.Colors.calorieOrange : Constants.Colors.surfaceLight)
                     .cornerRadius(Constants.Layout.cornerRadius)
                 }
             }
         }
-        .frame(height: 46)
+        .frame(height: selectorHeight)
     }
     
     // Macro tab selector
@@ -250,17 +265,17 @@ struct AddCaloriesView: View {
                 }) {
                     HStack(spacing: 4) {
                         Text(mode.shortLabel)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(currentInputMode == mode ? .white : Color.gray)
                     }
-                    .padding(.vertical, 10)
+                    .padding(.vertical, 14)
                     .frame(maxWidth: .infinity)
                     .background(currentInputMode == mode ? mode.color : Constants.Colors.surfaceLight)
                     .cornerRadius(Constants.Layout.cornerRadius)
                 }
             }
         }
-        .frame(height: 40)
+        .frame(height: selectorHeight)
     }
     
     // Display panel
@@ -326,8 +341,7 @@ struct AddCaloriesView: View {
             Text(value)
                 .font(.system(size: 36, weight: .bold, design: .monospaced))
                 .foregroundColor(color)
-                .frame(maxWidth: .infinity)
-                .aspectRatio(1.0, contentMode: .fit)
+                .frame(width: keypadButtonSize, height: keypadButtonSize)
                 .background(
                     RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
                         .fill(Constants.Colors.surfaceLight)
