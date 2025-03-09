@@ -172,7 +172,7 @@ struct ActivityPanel: View {
                             .foregroundColor(Constants.Colors.primaryText)
                         
                         Circle()
-                            .fill(activityModel.mealLog["breakfast"] ?? false ? Constants.Colors.blue : Color.black.opacity(0.3))
+                            .fill(Color.black.opacity(0.3))
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
@@ -186,7 +186,7 @@ struct ActivityPanel: View {
                             .foregroundColor(Constants.Colors.primaryText)
                         
                         Circle()
-                            .fill(activityModel.mealLog["lunch"] ?? false ? Constants.Colors.blue : Color.black.opacity(0.3))
+                            .fill(Color.black.opacity(0.3))
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
@@ -200,7 +200,7 @@ struct ActivityPanel: View {
                             .foregroundColor(Constants.Colors.primaryText)
                         
                         Circle()
-                            .fill(activityModel.mealLog["dinner"] ?? false ? Constants.Colors.blue : Color.black.opacity(0.3))
+                            .fill(Color.black.opacity(0.3))
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
@@ -214,7 +214,7 @@ struct ActivityPanel: View {
                             .foregroundColor(Constants.Colors.primaryText)
                         
                         Circle()
-                            .fill(activityModel.mealLog["snacks"] ?? false ? Constants.Colors.blue : Color.black.opacity(0.3))
+                            .fill(Color.black.opacity(0.3))
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
