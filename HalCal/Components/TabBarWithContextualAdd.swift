@@ -2,12 +2,14 @@ import SwiftUI
 
 enum TabItem: String, CaseIterable {
     case calories = "CALORIES"
+    case activity = "ACTIVITY"
     case hydration = "HYDRATION"
     // Removed macros tab for now
     
     var icon: String {
         switch self {
         case .calories: return "flame.fill"
+        case .activity: return "chart.bar.fill"
         case .hydration: return "drop.fill"
         }
     }
@@ -15,6 +17,7 @@ enum TabItem: String, CaseIterable {
     var color: Color {
         switch self {
         case .calories: return Constants.Colors.calorieAccent
+        case .activity: return Constants.Colors.calorieAccent
         case .hydration: return Constants.Colors.turquoise
         }
     }
@@ -51,6 +54,24 @@ struct TabBarWithContextualAdd: View {
                         Text("Calories")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieAccent : Color.gray.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                
+                // Middle tab (Activity)
+                Button(action: { 
+                    withAnimation(.easeInOut) {
+                        selectedTab = .activity
+                    }
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "chart.bar.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(selectedTab == .activity ? Constants.Colors.calorieAccent : Color.gray.opacity(0.5))
+                        
+                        Text("Activity")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(selectedTab == .activity ? Constants.Colors.calorieAccent : Color.gray.opacity(0.7))
                     }
                     .frame(maxWidth: .infinity)
                 }

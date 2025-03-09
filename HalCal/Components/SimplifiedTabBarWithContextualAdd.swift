@@ -30,6 +30,19 @@ struct SimplifiedTabBarWithContextualAdd: View {
                         .padding(.top, 6)
                 }
                 
+                // Middle tab (Activity)
+                Button(action: { 
+                    withAnimation(.easeInOut) {
+                        selectedTab = .activity
+                    }
+                }) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(selectedTab == .activity ? Constants.Colors.calorieAccent : Color.gray.opacity(0.5))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 6)
+                }
+                
                 // Spacer for center add button
                 Spacer()
                     .frame(width: 80)
