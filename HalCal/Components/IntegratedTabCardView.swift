@@ -26,6 +26,7 @@ struct IntegratedTabCardView<CardContent: View>: View {
     // Position state
     @State private var offset: CGFloat = 0
     @State private var previousOffset: CGFloat = 0
+    @State private var isDragging: Bool = false // Track if user is actively dragging
     
     // Define snap points
     var collapsedPosition: CGFloat = 0
@@ -60,32 +61,34 @@ struct IntegratedTabCardView<CardContent: View>: View {
                 .zIndex(1) // Make sure tab bar is always on top
                 
                 // Card content - slides up from behind tab bar when visible
-                if offset > 0 {
-                    VStack(spacing: 0) {
-                        // Handle indicator
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(width: 40, height: 4)
-                            .cornerRadius(2)
-                            .padding(.top, 12)
-                            .padding(.bottom, 16)
-                        
-                        // Dynamic card content
+                VStack(spacing: 0) {
+                    // Handle indicator - Always show a hint of the handle to indicate swipability
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.5))
+                        .frame(width: 40, height: 4)
+                        .cornerRadius(2)
+                        .padding(.top, 12)
+                        .padding(.bottom, offset > 10 ? 16 : 8)
+                    
+                    // Dynamic card content - only show when pulled up enough
+                    if offset > 10 {
                         cardContent
                             .padding(.bottom, 20) // Small padding at bottom of card content
                     }
-                    .background(Color.white)
-                    .cornerRadius(Constants.Layout.cornerRadius, corners: [.topLeft, .topRight])
-                    .shadow(color: Color.black.opacity(0.1), radius: 4, y: -2)
-                    .offset(y: geometry.size.height - offset)
-                    .frame(maxHeight: offset) // Limit card height to offset value
-                    .zIndex(0) // Place behind tab bar
                 }
+                .background(Color.white)
+                .cornerRadius(Constants.Layout.cornerRadius, corners: [.topLeft, .topRight])
+                .shadow(color: Color.black.opacity(0.1), radius: 4, y: -2)
+                .offset(y: geometry.size.height - max(offset, tabBarHeight - 20))
+                .frame(maxHeight: max(offset, tabBarHeight))
+                .zIndex(0.9) // Just below tab bar but above other content
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
             .gesture(
                 DragGesture()
                     .onChanged { value in
+                        isDragging = true
+                        
                         // Follow finger precisely during drag
                         let dragAmount = value.translation.height
                         let newOffset = previousOffset - dragAmount
@@ -101,6 +104,8 @@ struct IntegratedTabCardView<CardContent: View>: View {
                         }
                     }
                     .onEnded { value in
+                        isDragging = false
+                        
                         // Previous position before gesture ended
                         previousOffset = offset
                         
@@ -155,7 +160,7 @@ struct IntegratedTabCardView<CardContent: View>: View {
                 previousOffset = cardPosition.offset
             }
             .onChange(of: cardPosition) { oldValue, newValue in
-                if oldValue != newValue {
+                if oldValue != newValue && !isDragging {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.8, blendDuration: 0)) {
                         offset = newValue.offset
                         previousOffset = newValue.offset
