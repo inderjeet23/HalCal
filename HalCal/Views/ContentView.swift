@@ -22,7 +22,6 @@ struct ContentView: View {
     @StateObject private var hydrationModel = HydrationModel()
     @State private var selectedTab: TabItem = .calories
     @State private var showingAddSheet = false
-    @State private var cardPosition: CardPosition = .collapsed
     
     // Sample meals - in a real app, these would come from CalorieModel
     @State private var meals: [Meal] = [
@@ -39,108 +38,104 @@ struct ContentView: View {
             // Background with subtle texture
             Constants.Colors.background
                 .ignoresSafeArea()
-                .overlay(
-                    // Subtle noise texture
-                    Image("noiseTexture")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .blendMode(.overlay)
-                        .opacity(0.03)
-                        .ignoresSafeArea()
-                )
             
             // Main content area
             VStack(spacing: 0) {
                 // Calories Tab
                 if selectedTab == .calories {
-                    CaloriesView(calorieModel: calorieModel)
-                        .transition(.opacity)
+                    ScrollView {
+                        VStack(spacing: Constants.Layout.componentSpacing) {
+                            // Display CaloriesView at the top
+                            CaloriesView(calorieModel: calorieModel)
+                                .transition(.opacity)
+                            
+                            // Meal list section
+                            VStack(spacing: 16) {
+                                HStack {
+                                    Text("Today's Meals")
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                    
+                                    Spacer()
+                                    
+                                    // Total calories display
+                                    Text("\(meals.reduce(0) { $0 + $1.calories }) kcal")
+                                        .font(.subheadline)
+                                        .foregroundColor(Constants.Colors.calorieOrange)
+                                        .bold()
+                                }
+                                
+                                // Dynamic meals from data model
+                                if meals.isEmpty {
+                                    Text("No meals logged today")
+                                        .foregroundColor(.gray)
+                                        .padding(.vertical, 20)
+                                } else {
+                                    ForEach(meals.sorted(by: { $0.time > $1.time })) { meal in
+                                        HStack {
+                                            // Circle with meal type icon
+                                            Circle()
+                                                .fill(Constants.Colors.calorieOrange.opacity(0.2))
+                                                .frame(width: 40, height: 40)
+                                                .overlay(
+                                                    Image(systemName: mealTypeIcon(for: meal.type))
+                                                        .foregroundColor(Constants.Colors.calorieOrange)
+                                                )
+                                            
+                                            VStack(alignment: .leading) {
+                                                Text(meal.name)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(.white)
+                                                
+                                                Text("\(meal.calories) calories • \(timeFormatter.string(from: meal.time))")
+                                                    .font(.subheadline)
+                                                    .foregroundColor(.gray)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            // Delete button
+                                            Button(action: {
+                                                withAnimation {
+                                                    deleteMeal(meal)
+                                                }
+                                            }) {
+                                                Image(systemName: "trash")
+                                                    .foregroundColor(.gray)
+                                                    .font(.system(size: 16))
+                                                    .padding(8)
+                                            }
+                                        }
+                                        .padding(12)
+                                        .background(Color.black.opacity(0.2))
+                                        .cornerRadius(12)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, tabBarHeight + 20) // Provide space for tab bar
+                        }
+                    }
                 }
                 
                 // Hydration Tab
                 if selectedTab == .hydration {
                     HydrationView(hydrationModel: hydrationModel)
                         .transition(.opacity)
+                        .padding(.bottom, tabBarHeight) // Add padding to make space for tab bar
                 }
             }
             .ignoresSafeArea(.keyboard)
-            .padding(.bottom, tabBarHeight) // Add padding to make space for tab bar
             
-            // Integrated tab and card component with improved layout
-            IntegratedTabCardView(
+            // Simple tab bar (no card functionality)
+            TabBarWithContextualAdd(
                 selectedTab: $selectedTab,
-                cardPosition: $cardPosition,
                 addAction: {
                     showingAddSheet = true
                 }
-            ) {
-                // Card content
-                VStack(spacing: 16) {
-                    HStack {
-                        Text("Today's Meals")
-                            .font(.headline)
-                            .foregroundColor(.black)
-                        
-                        Spacer()
-                        
-                        // Total calories display
-                        Text("\(meals.reduce(0) { $0 + $1.calories }) kcal")
-                            .font(.subheadline)
-                            .foregroundColor(Constants.Colors.calorieOrange)
-                            .bold()
-                    }
-                    .padding(.top, 4)
-                    
-                    // Dynamic meals from data model
-                    if meals.isEmpty {
-                        Text("No meals logged today")
-                            .foregroundColor(.gray)
-                            .padding(.vertical, 20)
-                    } else {
-                        ForEach(meals.sorted(by: { $0.time > $1.time })) { meal in
-                            HStack {
-                                // Circle with meal type icon
-                                Circle()
-                                    .fill(Constants.Colors.calorieOrange.opacity(0.2))
-                                    .frame(width: 40, height: 40)
-                                    .overlay(
-                                        Image(systemName: mealTypeIcon(for: meal.type))
-                                            .foregroundColor(Constants.Colors.calorieOrange)
-                                    )
-                                
-                                VStack(alignment: .leading) {
-                                    Text(meal.name)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(.black)
-                                    
-                                    Text("\(meal.calories) calories • \(timeFormatter.string(from: meal.time))")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                }
-                                
-                                Spacer()
-                                
-                                // Delete button
-                                Button(action: {
-                                    withAnimation {
-                                        deleteMeal(meal)
-                                    }
-                                }) {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.gray)
-                                        .font(.system(size: 16))
-                                        .padding(8)
-                                }
-                            }
-                            .padding(12)
-                            .background(Color.gray.opacity(0.05))
-                            .cornerRadius(12)
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-            }
-            .edgesIgnoringSafeArea(.bottom) // Make sure it extends to bottom edge
+            )
+            .background(Color.black.opacity(0.01)) // Tiny background to capture taps
+            .edgesIgnoringSafeArea(.bottom)
         }
         .sheet(isPresented: $showingAddSheet) {
             if selectedTab == .calories {
@@ -226,11 +221,6 @@ struct ContentView: View {
             )
             
             meals.append(newMeal)
-            
-            // Show the card if it was collapsed
-            if cardPosition == .collapsed {
-                cardPosition = .half
-            }
         }
     }
 }
