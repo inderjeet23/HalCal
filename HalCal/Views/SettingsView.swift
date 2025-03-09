@@ -157,7 +157,7 @@ struct SettingsView: View {
     }
     
     private func resetWater() {
-        hydrationModel.resetData()
+        hydrationModel.resetForDay()
         
         // Provide haptic feedback
         let generator = UIImpactFeedbackGenerator(style: .medium)
