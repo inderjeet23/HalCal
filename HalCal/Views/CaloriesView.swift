@@ -7,6 +7,84 @@
 
 import SwiftUI
 
+// MARK: - Macro Progress View
+struct MacroProgressView: View {
+    var progress: Double
+    var label: String
+    var grams: Double
+    var color: Color
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            // Circular progress
+            ZStack {
+                // Background circle
+                Circle()
+                    .stroke(Color.black.opacity(0.3), lineWidth: 4)
+                    .frame(width: 50, height: 50)
+                
+                // Progress circle
+                Circle()
+                    .trim(from: 0, to: min(progress, 1.0))
+                    .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .frame(width: 50, height: 50)
+                    .rotationEffect(.degrees(-90))
+                
+                // Center text
+                VStack(spacing: 0) {
+                    Text(label)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white)
+                    Text("\(Int(progress * 100))%")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .shadow(color: color.opacity(0.3), radius: 4, x: 0, y: 0)
+            
+            // Grams label
+            Text("\(Int(grams))g")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.gray)
+        }
+    }
+}
+
+// MARK: - Macro Nutrients View
+struct MacroNutrientsView: View {
+    @ObservedObject var calorieModel: CalorieModel
+    
+    var body: some View {
+        HStack(spacing: 30) {
+            // Protein
+            MacroProgressView(
+                progress: calorieModel.consumedProtein / calorieModel.proteinTarget,
+                label: "P",
+                grams: calorieModel.consumedProtein,
+                color: Constants.Colors.turquoise
+            )
+            
+            // Carbs
+            MacroProgressView(
+                progress: calorieModel.consumedCarbs / calorieModel.carbTarget,
+                label: "C",
+                grams: calorieModel.consumedCarbs,
+                color: Color.purple
+            )
+            
+            // Fat
+            MacroProgressView(
+                progress: calorieModel.consumedFat / calorieModel.fatTarget,
+                label: "F",
+                grams: calorieModel.consumedFat,
+                color: Color.yellow
+            )
+        }
+        .padding(.vertical, 8)
+        .background(Color.clear)
+    }
+}
+
 struct CaloriesView: View {
     @ObservedObject var calorieModel: CalorieModel
     @State private var selectedDay: Date = Date()
@@ -90,6 +168,11 @@ struct CaloriesView: View {
                 )
                 .frame(height: 220)
                 .padding(.vertical, 10)
+                
+                // Add macro nutrients view here
+                MacroNutrientsView(calorieModel: calorieModel)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
                 
                 // Tab selector for this view
                 HStack(spacing: 24) {
@@ -263,7 +346,14 @@ struct TabButton: View {
     }
 }
 
-// Preview
-#Preview {
+// MARK: - Previews
+#Preview("Calories View") {
     CaloriesView(calorieModel: CalorieModel())
+}
+
+#Preview("Macro Nutrients View") {
+    MacroNutrientsView(calorieModel: CalorieModel())
+        .background(Constants.Colors.background)
+        .previewLayout(.sizeThatFits)
+        .padding()
 } 
