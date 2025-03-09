@@ -13,6 +13,9 @@ struct Meal: Identifiable {
     let id = UUID()
     let name: String
     let calories: Int
+    let protein: Double
+    let carbs: Double
+    let fat: Double
     let time: Date
     let type: MealType
 }
@@ -22,9 +25,14 @@ struct ContentView: View {
     @StateObject private var hydrationModel = HydrationModel()
     @State private var selectedTab: TabItem = .calories
     @State private var showingAddSheet = false
-    @State private var previousCalorieTotal: Int = 0 // Track previous calorie total
     
-    // Sample meals - in a real app, these would come from CalorieModel
+    // Track the state before adding new nutrients
+    @State private var previousCalorieTotal: Int = 0
+    @State private var previousProteinTotal: Double = 0.0
+    @State private var previousCarbsTotal: Double = 0.0
+    @State private var previousFatTotal: Double = 0.0
+    
+    // Sample meals - in a real app, these would come from persistent storage
     @State private var meals: [Meal] = []
     
     // Tab bar height including safe area
@@ -87,6 +95,13 @@ struct ContentView: View {
                                                 Text("\(meal.calories) calories • \(timeFormatter.string(from: meal.time))")
                                                     .font(.subheadline)
                                                     .foregroundColor(.gray)
+                                                
+                                                // Show macros if they exist
+                                                if meal.protein > 0 || meal.carbs > 0 || meal.fat > 0 {
+                                                    Text("P: \(Int(meal.protein))g • C: \(Int(meal.carbs))g • F: \(Int(meal.fat))g")
+                                                        .font(.caption)
+                                                        .foregroundColor(Constants.Colors.turquoise)
+                                                }
                                             }
                                             
                                             Spacer()
@@ -128,8 +143,11 @@ struct ContentView: View {
             TabBarWithContextualAdd(
                 selectedTab: $selectedTab,
                 addAction: {
-                    // Store current calorie total before adding
+                    // Store current nutrition totals before adding
                     previousCalorieTotal = calorieModel.consumedCalories
+                    previousProteinTotal = calorieModel.consumedProtein
+                    previousCarbsTotal = calorieModel.consumedCarbs
+                    previousFatTotal = calorieModel.consumedFat
                     showingAddSheet = true
                 }
             )
@@ -140,10 +158,20 @@ struct ContentView: View {
             if selectedTab == .calories {
                 AddCaloriesView(calorieModel: calorieModel)
                     .onDisappear {
-                        // Only add a meal if calories were actually added during this session
+                        // Calculate what was added during this session
                         let caloriesAdded = calorieModel.consumedCalories - previousCalorieTotal
-                        if caloriesAdded > 0 {
-                            addMeal(calories: caloriesAdded)
+                        let proteinAdded = calorieModel.consumedProtein - previousProteinTotal
+                        let carbsAdded = calorieModel.consumedCarbs - previousCarbsTotal 
+                        let fatAdded = calorieModel.consumedFat - previousFatTotal
+                        
+                        // Only add a meal if something was added
+                        if caloriesAdded > 0 || proteinAdded > 0 || carbsAdded > 0 || fatAdded > 0 {
+                            addMealWithNutrients(
+                                calories: caloriesAdded,
+                                protein: proteinAdded,
+                                carbs: carbsAdded,
+                                fat: fatAdded
+                            )
                         }
                     }
             } else if selectedTab == .hydration {
@@ -203,19 +231,25 @@ struct ContentView: View {
         withAnimation {
             meals.removeAll(where: { $0.id == meal.id })
             
-            // Update the model
+            // Update the model - remove the calories and macros
             calorieModel.consumedCalories -= meal.calories
+            calorieModel.consumedProtein -= meal.protein
+            calorieModel.consumedCarbs -= meal.carbs
+            calorieModel.consumedFat -= meal.fat
             calorieModel.saveData()
         }
     }
     
-    // Add a meal with specific calories
-    private func addMeal(calories: Int) {
+    // Add a meal with all nutrient data
+    private func addMealWithNutrients(calories: Int, protein: Double, carbs: Double, fat: Double) {
         withAnimation {
-            // Create a meal with the actual calories added
+            // Create a meal with the actual nutrients added
             let newMeal = Meal(
                 name: getMealNameBasedOnTime(),
                 calories: calories,
+                protein: protein,
+                carbs: carbs,
+                fat: fat,
                 time: Date(),
                 type: getMealTypeBasedOnTime()
             )

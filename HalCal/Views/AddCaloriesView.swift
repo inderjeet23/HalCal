@@ -59,418 +59,295 @@ enum InputMode: String, CaseIterable, Identifiable {
 struct AddCaloriesView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var calorieModel: CalorieModel
-    @State private var calorieAmount: String = ""
-    @State private var proteinAmount: String = ""
-    @State private var carbsAmount: String = ""
-    @State private var fatAmount: String = ""
-    @State private var keypadButtonStates: [String: Bool] = [:]
-    @State private var selectedMealType: MealType = .breakfast
-    @State private var showMacros: Bool = true
+    
+    // Current input state
     @State private var currentInputMode: InputMode = .calories
+    @State private var selectedMealType: MealType = .snack
+    @State private var currentValue: String = ""
     
-    // Mock data for already logged meals - replace with actual data later
-    private let loggedMeals: Set<MealType> = [.breakfast, .lunch]
+    // Track accumulated values for all nutrients in this session
+    @State private var caloriesValue: Int = 0
+    @State private var proteinValue: Double = 0.0
+    @State private var carbsValue: Double = 0.0
+    @State private var fatValue: Double = 0.0
     
-    // Create a custom transition manager
-    private let transitionManager = CustomTransitionManager()
-    
-    // Define fixed sizes for consistent UI
-    private let selectorHeight: CGFloat = 54
+    // Constants
     private let keypadButtonSize: CGFloat = 70
+    private let selectorHeight: CGFloat = 54
     
     var body: some View {
-        ZStack {
-            // Background
-            Constants.Colors.background
-                .ignoresSafeArea()
-                .overlay(
-                    // Subtle noise texture
-                    Image("noiseTexture")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .blendMode(.overlay)
-                        .opacity(0.03)
-                        .ignoresSafeArea()
-                )
+        VStack(spacing: 24) {
+            // Header
+            Text(currentInputMode.headerText)
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.top, 20)
             
-            // Main content
-            VStack(spacing: Constants.Layout.componentSpacing) {
-                // Header with close button
-                HStack {
-                    Button {
-                        HapticManager.shared.impact(style: .medium)
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(Constants.Colors.primaryText)
-                            .padding(12)
-                            .background(
-                                Circle()
-                                    .fill(Constants.Colors.surfaceLight)
-                                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 1)
-                            )
-                    }
-                    .buttonStyle(SkeuomorphicButtonStyle())
-                    
-                    Spacer()
-                    
-                    // Dynamic header based on selected input mode
-                    Text(currentInputMode.headerText)
-                        .font(Constants.Fonts.sectionHeader)
-                        .foregroundColor(Constants.Colors.primaryText)
-                        .tracking(2)
-                    
-                    Spacer()
-                    
-                    // Invisible element for balance
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 44, height: 44)
+            // Value display
+            HStack {
+                Spacer()
+                Text("\(currentValue.isEmpty ? "0" : currentValue) \(currentInputMode.unit)")
+                    .font(.system(size: 36, weight: .bold))
+                    .foregroundColor(currentInputMode.color)
+                    .animation(.easeInOut, value: currentInputMode)
+                    .multilineTextAlignment(.trailing)
+                    .padding(.horizontal, 24)
+            }
+            
+            // Already added values display
+            HStack(spacing: 12) {
+                if caloriesValue > 0 {
+                    ValueBadge(value: "\(caloriesValue)kcal", color: Constants.Colors.calorieOrange)
                 }
-                .padding(.horizontal, Constants.Layout.screenMargin)
-                .padding(.top, Constants.Layout.screenMargin)
-                
-                // Meal type selector - larger size
-                mealTypeSelector()
-                    .padding(.horizontal, Constants.Layout.screenMargin)
-                
-                // Macro mode selector - larger size
-                macroTabSelector()
-                    .padding(.horizontal, Constants.Layout.screenMargin)
-                    .padding(.top, 8)
-                
-                // Display panel
-                displayPanel()
-                    .padding(.horizontal, Constants.Layout.screenMargin)
-                
-                Spacer(minLength: 20) // Push keypad down
-                
-                // Large keypad with fixed-size buttons
-                VStack(spacing: Constants.Layout.componentSpacing) {
-                    HStack(spacing: Constants.Layout.componentSpacing) {
-                        keypadButton("1")
-                        keypadButton("2")
-                        keypadButton("3")
-                    }
-                    
-                    HStack(spacing: Constants.Layout.componentSpacing) {
-                        keypadButton("4")
-                        keypadButton("5")
-                        keypadButton("6")
-                    }
-                    
-                    HStack(spacing: Constants.Layout.componentSpacing) {
-                        keypadButton("7")
-                        keypadButton("8")
-                        keypadButton("9")
-                    }
-                    
-                    HStack(spacing: Constants.Layout.componentSpacing) {
-                        keypadButton("C", color: Constants.Colors.alertRed)
-                        keypadButton("0")
-                        keypadButton("⌫", color: Constants.Colors.blue)
-                    }
+                if proteinValue > 0 {
+                    ValueBadge(value: "\(Int(proteinValue))g P", color: Constants.Colors.turquoise)
                 }
-                .padding(.horizontal, Constants.Layout.screenMargin)
+                if carbsValue > 0 {
+                    ValueBadge(value: "\(Int(carbsValue))g C", color: Color.purple)
+                }
+                if fatValue > 0 {
+                    ValueBadge(value: "\(Int(fatValue))g F", color: Color.yellow)
+                }
+                
+                if caloriesValue == 0 && proteinValue == 0 && carbsValue == 0 && fatValue == 0 {
+                    Text("No nutrients added yet")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal)
+                }
                 
                 Spacer()
-                
-                // Add button - large and prominent at bottom
-                Button {
-                    if let calories = Int(calorieAmount), calories > 0 {
-                        HapticManager.shared.notification(type: .success)
-                        calorieModel.addCalories(calories) // This should be updated to include meal type and macros
-                        calorieModel.saveData()
-                        dismiss()
+            }
+            .padding(.horizontal, 24)
+            .frame(height: 30)
+            
+            // Meal type selector
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(MealType.allCases) { mealType in
+                        Button(action: {
+                            selectedMealType = mealType
+                        }) {
+                            Text(mealType.rawValue)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(selectedMealType == mealType ? .white : .gray)
+                                .padding(.vertical, 14)
+                                .padding(.horizontal, 20)
+                                .background(
+                                    selectedMealType == mealType ?
+                                    currentInputMode.color :
+                                    Constants.Colors.cardBackground
+                                )
+                                .cornerRadius(Constants.Layout.cornerRadius)
+                        }
                     }
-                } label: {
-                    Text(addButtonText)
-                        .font(Constants.Fonts.primaryLabel)
-                        .foregroundColor(Constants.Colors.primaryText)
-                        .padding()
+                }
+                .padding(.horizontal, 24)
+            }
+            .frame(height: selectorHeight)
+            
+            // Macro input mode selector
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    MacroButton(
+                        title: "Calories",
+                        isSelected: currentInputMode == .calories,
+                        color: Constants.Colors.calorieOrange
+                    ) {
+                        // Save current value before switching
+                        saveCurrentValue()
+                        currentInputMode = .calories
+                    }
+                    
+                    MacroButton(
+                        title: "Protein",
+                        isSelected: currentInputMode == .protein,
+                        color: Constants.Colors.turquoise
+                    ) {
+                        // Save current value before switching
+                        saveCurrentValue()
+                        currentInputMode = .protein
+                    }
+                    
+                    MacroButton(
+                        title: "Carbs",
+                        isSelected: currentInputMode == .carbs,
+                        color: Color.purple
+                    ) {
+                        // Save current value before switching
+                        saveCurrentValue()
+                        currentInputMode = .carbs
+                    }
+                    
+                    MacroButton(
+                        title: "Fat",
+                        isSelected: currentInputMode == .fat,
+                        color: Color.yellow
+                    ) {
+                        // Save current value before switching
+                        saveCurrentValue()
+                        currentInputMode = .fat
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+            .frame(height: selectorHeight)
+            
+            // Numeric keypad
+            VStack(spacing: 8) {
+                ForEach(0..<3) { row in
+                    HStack(spacing: 8) {
+                        ForEach(1..<4) { col in
+                            let number = row * 3 + col
+                            KeypadButton(text: "\(number)") {
+                                addDigit(String(number))
+                            }
+                            .frame(width: keypadButtonSize, height: keypadButtonSize)
+                        }
+                    }
+                }
+                
+                HStack(spacing: 8) {
+                    KeypadButton(text: "0") {
+                        addDigit("0")
+                    }
+                    .frame(width: keypadButtonSize, height: keypadButtonSize)
+                    
+                    KeypadButton(text: ".") {
+                        if !currentValue.contains(".") && currentValue.count > 0 {
+                            currentValue += "."
+                        }
+                    }
+                    .frame(width: keypadButtonSize, height: keypadButtonSize)
+                    
+                    KeypadButton(text: "⌫") {
+                        if !currentValue.isEmpty {
+                            currentValue.removeLast()
+                        }
+                    }
+                    .frame(width: keypadButtonSize, height: keypadButtonSize)
+                }
+            }
+            .padding(.horizontal, 24)
+            
+            // Button row
+            HStack(spacing: 16) {
+                Button(action: {
+                    // Cancel without adding
+                    dismiss()
+                }) {
+                    Text("Cancel")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 16)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.gray.opacity(0.3))
+                        .cornerRadius(Constants.Layout.cornerRadius)
+                }
+                
+                Button(action: {
+                    // Save current input before finishing
+                    saveCurrentValue()
+                    
+                    // Add all tracked nutrients to the model
+                    var anythingAdded = false
+                    
+                    if caloriesValue > 0 {
+                        calorieModel.addCalories(amount: caloriesValue, mealType: selectedMealType)
+                        anythingAdded = true
+                    }
+                    
+                    if proteinValue > 0 || carbsValue > 0 || fatValue > 0 {
+                        calorieModel.addMacros(
+                            protein: proteinValue,
+                            carbs: carbsValue,
+                            fat: fatValue,
+                            mealType: selectedMealType
+                        )
+                        anythingAdded = true
+                    }
+                    
+                    if anythingAdded {
+                        // Provide haptic feedback
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred()
+                    }
+                    
+                    dismiss()
+                }) {
+                    Text("Add")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding(.vertical, 16)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                                .fill(Constants.Gradients.metallicSurface)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                                        .stroke(currentInputMode.color, lineWidth: Constants.Layout.borderWidth)
-                                )
-                                .shadow(
-                                    color: Constants.Shadows.buttonShadow.color,
-                                    radius: Constants.Shadows.buttonShadow.radius,
-                                    x: Constants.Shadows.buttonShadow.x,
-                                    y: Constants.Shadows.buttonShadow.y
-                                )
+                            (caloriesValue > 0 || proteinValue > 0 || carbsValue > 0 || fatValue > 0 || !currentValue.isEmpty) ?
+                            currentInputMode.color :
+                            currentInputMode.color.opacity(0.3)
                         )
+                        .cornerRadius(Constants.Layout.cornerRadius)
                 }
-                .buttonStyle(SkeuomorphicButtonStyle())
-                .disabled(isButtonDisabled)
-                .opacity(isButtonDisabled ? 0.5 : 1.0)
-                .padding(.horizontal, Constants.Layout.screenMargin)
-                .padding(.bottom, Constants.Layout.screenMargin * 2)
+                .disabled(caloriesValue == 0 && proteinValue == 0 && carbsValue == 0 && fatValue == 0 && currentValue.isEmpty)
             }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
         }
-        // Apply custom transition
-        .background(HostingControllerConfigurator(transitionManager: transitionManager))
-    }
-    
-    // Meal type selector component
-    private func mealTypeSelector() -> some View {
-        HStack(spacing: 4) {
-            ForEach(MealType.allCases) { mealType in
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        selectedMealType = mealType
-                    }
-                    HapticManager.shared.impact(style: .light)
-                }) {
-                    VStack(spacing: 4) {
-                        // Indicator for logged meals
-                        if loggedMeals.contains(mealType) {
-                            Circle()
-                                .fill(Constants.Colors.calorieOrange)
-                                .frame(width: 8, height: 8)
-                        } else {
-                            Spacer()
-                                .frame(height: 8)
-                        }
-                        
-                        Text(mealType.rawValue)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(selectedMealType == mealType ? .white : Color.gray)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity)
-                    .background(selectedMealType == mealType ? Constants.Colors.calorieOrange : Constants.Colors.surfaceLight)
-                    .cornerRadius(Constants.Layout.cornerRadius)
-                }
-            }
-        }
-        .frame(height: selectorHeight)
-    }
-    
-    // Macro tab selector
-    private func macroTabSelector() -> some View {
-        HStack(spacing: 4) {
-            ForEach(InputMode.allCases) { mode in
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        currentInputMode = mode
-                    }
-                    HapticManager.shared.impact(style: .light)
-                }) {
-                    HStack(spacing: 4) {
-                        Text(mode.shortLabel)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(currentInputMode == mode ? .white : Color.gray)
-                    }
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity)
-                    .background(currentInputMode == mode ? mode.color : Constants.Colors.surfaceLight)
-                    .cornerRadius(Constants.Layout.cornerRadius)
-                }
-            }
-        }
-        .frame(height: selectorHeight)
-    }
-    
-    // Display panel
-    private func displayPanel() -> some View {
-        ZStack {
-            // Panel background
-            RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                .fill(Constants.Colors.surfaceMid)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                        .stroke(Constants.Gradients.metallicRim, lineWidth: Constants.Layout.borderWidth)
-                )
-                .shadow(
-                    color: Constants.Shadows.insetShadow.color,
-                    radius: Constants.Shadows.insetShadow.radius,
-                    x: Constants.Shadows.insetShadow.x,
-                    y: Constants.Shadows.insetShadow.y
-                )
-            
-            // Display text based on current input mode
-            HStack(alignment: .center) {
-                Spacer()
-                
-                let value = valueForMode(currentInputMode)
-                Text(value.isEmpty ? "0" : value)
-                    .font(.system(size: 64, weight: .bold, design: .monospaced))
-                    .foregroundColor(currentInputMode.color)
-                    .shadow(color: currentInputMode.color.opacity(0.6), radius: 2, x: 0, y: 0)
-                
-                if currentInputMode != .calories {
-                    Text(currentInputMode.unit)
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(currentInputMode.color.opacity(0.8))
-                        .offset(y: 8)
-                }
-                
-                Spacer()
-            }
-            .padding()
-        }
-        .frame(height: 100)
-    }
-    
-    // Helper to get current value based on input mode
-    private func valueForMode(_ mode: InputMode) -> String {
-        switch mode {
-        case .calories: return calorieAmount
-        case .protein: return proteinAmount
-        case .carbs: return carbsAmount
-        case .fat: return fatAmount
+        .background(Constants.Colors.background)
+        .onAppear {
+            // Load values from persisted storage in a real app
         }
     }
     
-    private func keypadButton(_ value: String, color: Color = Constants.Colors.primaryText) -> some View {
-        let isPressed = Binding(
-            get: { keypadButtonStates[value] ?? false },
-            set: { keypadButtonStates[value] = $0 }
-        )
-        
-        return Button {
-            handleKeypadInput(value)
-        } label: {
-            Text(value)
-                .font(.system(size: 36, weight: .bold, design: .monospaced))
-                .foregroundColor(color)
-                .frame(width: keypadButtonSize, height: keypadButtonSize)
-                .background(
-                    RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                        .fill(Constants.Colors.surfaceLight)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.white.opacity(0.4),
-                                            Color.white.opacity(0.2),
-                                            Color.black.opacity(0.2),
-                                            Color.black.opacity(0.3)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: Constants.Layout.borderWidth / 2
-                                )
-                        )
-                        .shadow(
-                            color: Constants.Shadows.buttonShadow.color,
-                            radius: Constants.Shadows.buttonShadow.radius,
-                            x: Constants.Shadows.buttonShadow.x,
-                            y: Constants.Shadows.buttonShadow.y
-                        )
-                )
-        }
-        .buttonPressAnimation(isPressed: isPressed.wrappedValue)
-        .onLongPressGesture(minimumDuration: .infinity, maximumDistance: .infinity, pressing: { pressing in
-            isPressed.wrappedValue = pressing
-        }, perform: {})
-    }
-    
-    private func handleKeypadInput(_ value: String) {
-        // Haptic feedback
-        HapticManager.shared.impact(style: .light)
-        
-        switch value {
-        case "C":
-            clearCurrentInput()
-        case "⌫":
-            removeLastDigitFromCurrentInput()
-        default:
-            addDigitToCurrentInput(value)
+    // Add a digit to the current value
+    private func addDigit(_ digit: String) {
+        // Limit digits for usability
+        if currentValue.count < 6 {
+            currentValue += digit
         }
     }
     
-    private func clearCurrentInput() {
-        switch currentInputMode {
-        case .calories:
-            calorieAmount = ""
-        case .protein:
-            proteinAmount = ""
-        case .carbs:
-            carbsAmount = ""
-        case .fat:
-            fatAmount = ""
-        }
-    }
-    
-    private func removeLastDigitFromCurrentInput() {
-        switch currentInputMode {
-        case .calories:
-            if !calorieAmount.isEmpty {
-                calorieAmount.removeLast()
-            }
-        case .protein:
-            if !proteinAmount.isEmpty {
-                proteinAmount.removeLast()
-            }
-        case .carbs:
-            if !carbsAmount.isEmpty {
-                carbsAmount.removeLast()
-            }
-        case .fat:
-            if !fatAmount.isEmpty {
-                fatAmount.removeLast()
-            }
-        }
-    }
-    
-    private func addDigitToCurrentInput(_ digit: String) {
-        let maxDigits = 3 // Limit to 3 digits for macros, 5 for calories
+    // Save the current value to the appropriate nutrient tracker
+    private func saveCurrentValue() {
+        guard !currentValue.isEmpty else { return }
         
         switch currentInputMode {
         case .calories:
-            if calorieAmount.count < 5 {
-                calorieAmount += digit
+            if let value = Int(currentValue) {
+                caloriesValue += value
             }
         case .protein:
-            if proteinAmount.count < maxDigits {
-                proteinAmount += digit
+            if let value = Double(currentValue) {
+                proteinValue += value
             }
         case .carbs:
-            if carbsAmount.count < maxDigits {
-                carbsAmount += digit
+            if let value = Double(currentValue) {
+                carbsValue += value
             }
         case .fat:
-            if fatAmount.count < maxDigits {
-                fatAmount += digit
+            if let value = Double(currentValue) {
+                fatValue += value
             }
         }
+        
+        // Clear the current value for the next input
+        currentValue = ""
     }
+}
+
+// Badge to show added values
+struct ValueBadge: View {
+    let value: String
+    let color: Color
     
-    // Computed properties
-    private var addButtonText: String {
-        switch currentInputMode {
-        case .calories:
-            return "ADD \(calorieAmount.isEmpty ? "0" : calorieAmount) CALORIES TO \(selectedMealType.rawValue.uppercased())"
-        case .protein:
-            return "ADD \(proteinAmount.isEmpty ? "0" : proteinAmount)g PROTEIN TO \(selectedMealType.rawValue.uppercased())"
-        case .carbs:
-            return "ADD \(carbsAmount.isEmpty ? "0" : carbsAmount)g CARBS TO \(selectedMealType.rawValue.uppercased())"
-        case .fat:
-            return "ADD \(fatAmount.isEmpty ? "0" : fatAmount)g FAT TO \(selectedMealType.rawValue.uppercased())"
-        }
-    }
-    
-    private var isButtonDisabled: Bool {
-        switch currentInputMode {
-        case .calories:
-            return calorieAmount.isEmpty || Int(calorieAmount) == 0
-        case .protein:
-            return proteinAmount.isEmpty || Int(proteinAmount) == 0
-        case .carbs:
-            return carbsAmount.isEmpty || Int(carbsAmount) == 0
-        case .fat:
-            return fatAmount.isEmpty || Int(fatAmount) == 0
-        }
+    var body: some View {
+        Text(value)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(color.opacity(0.2))
+            .foregroundColor(color)
+            .cornerRadius(8)
     }
 }
 

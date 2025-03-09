@@ -9,161 +9,152 @@ import Foundation
 import Combine
 
 class CalorieModel: ObservableObject {
-    @Published var dailyCalorieGoal: Int = 2000
+    // Daily targets
+    @Published var calorieTarget: Int = 2000
+    @Published var proteinTarget: Double = 150
+    @Published var carbTarget: Double = 200
+    @Published var fatTarget: Double = 70
+    
+    // Consumed amounts
     @Published var consumedCalories: Int = 0
-    @Published var calorieDeficit: Int = 0
+    @Published var consumedProtein: Double = 0
+    @Published var consumedCarbs: Double = 0
+    @Published var consumedFat: Double = 0
     
-    // Macronutrient tracking
-    @Published var consumedProtein: Double = 0.0
-    @Published var consumedCarbs: Double = 0.0
-    @Published var consumedFat: Double = 0.0
-    
-    // Macronutrient goals (in grams)
-    @Published var proteinGoal: Double = 150.0
-    @Published var carbsGoal: Double = 200.0
-    @Published var fatGoal: Double = 65.0
-    
-    var caloriesRemaining: Int {
-        max(dailyCalorieGoal - consumedCalories, 0)
-    }
+    // Track meals by type
+    @Published var meals: [MealType: [Meal]] = [
+        .breakfast: [],
+        .lunch: [],
+        .dinner: [],
+        .snack: []
+    ]
     
     init() {
-        // Load saved data or use defaults
-        loadSavedData()
-        
-        // Calculate initial deficit
-        calculateDeficit()
+        loadData()
     }
     
-    // Public method to reload data
-    func loadData() {
-        loadSavedData()
-        calculateDeficit()
-    }
-    
-    func addCalories(_ amount: Int) {
+    // Function to add calories with an optional meal type
+    func addCalories(amount: Int, mealType: MealType = .snack) {
         consumedCalories += amount
-        calculateDeficit()
+        
+        // Add to meal tracking
+        let meal = Meal(
+            name: mealNameForType(mealType),
+            calories: amount,
+            protein: 0,
+            carbs: 0,
+            fat: 0,
+            time: Date(),
+            type: mealType
+        )
+        
+        if meals[mealType] != nil {
+            meals[mealType]?.append(meal)
+        } else {
+            meals[mealType] = [meal]
+        }
+        
+        saveData()
     }
     
-    func addMacros(protein: Double, carbs: Double, fat: Double) {
+    // Function to add macros that also adds the calories from those macros
+    func addMacros(protein: Double, carbs: Double, fat: Double, mealType: MealType = .snack) {
+        // Calculate calories from macros (4 calories per gram of protein/carbs, 9 per gram of fat)
+        let caloriesFromProtein = Int(protein * 4)
+        let caloriesFromCarbs = Int(carbs * 4)
+        let caloriesFromFat = Int(fat * 9)
+        let totalCaloriesFromMacros = caloriesFromProtein + caloriesFromCarbs + caloriesFromFat
+        
+        // Update totals
         consumedProtein += protein
         consumedCarbs += carbs
         consumedFat += fat
+        consumedCalories += totalCaloriesFromMacros
         
-        // Calculate calories from macros (4 cal/g protein, 4 cal/g carbs, 9 cal/g fat)
-        let caloriesFromMacros = Int(protein * 4 + carbs * 4 + fat * 9)
-        consumedCalories += caloriesFromMacros
-        calculateDeficit()
+        // Add to meal tracking
+        let meal = Meal(
+            name: mealNameForType(mealType),
+            calories: totalCaloriesFromMacros,
+            protein: protein,
+            carbs: carbs,
+            fat: fat,
+            time: Date(),
+            type: mealType
+        )
+        
+        if meals[mealType] != nil {
+            meals[mealType]?.append(meal)
+        } else {
+            meals[mealType] = [meal]
+        }
+        
+        saveData()
     }
     
-    func resetDailyCalories() {
+    // Get meal name based on type
+    private func mealNameForType(_ type: MealType) -> String {
+        switch type {
+        case .breakfast: return "Breakfast"
+        case .lunch: return "Lunch"
+        case .dinner: return "Dinner"
+        case .snack: return "Snack"
+        }
+    }
+    
+    // Save data to UserDefaults
+    func saveData() {
+        let defaults = UserDefaults.standard
+        defaults.set(consumedCalories, forKey: "consumedCalories")
+        defaults.set(consumedProtein, forKey: "consumedProtein")
+        defaults.set(consumedCarbs, forKey: "consumedCarbs")
+        defaults.set(consumedFat, forKey: "consumedFat")
+        
+        // In a real app, we would serialize and save the meals array too
+    }
+    
+    // Load data from UserDefaults
+    func loadData() {
+        let defaults = UserDefaults.standard
+        consumedCalories = defaults.integer(forKey: "consumedCalories")
+        consumedProtein = defaults.double(forKey: "consumedProtein")
+        consumedCarbs = defaults.double(forKey: "consumedCarbs")
+        consumedFat = defaults.double(forKey: "consumedFat")
+        
+        // In a real app, we would load the saved meals array too
+    }
+    
+    // Reset all values (for testing or for daily reset)
+    func resetData() {
         consumedCalories = 0
         consumedProtein = 0
         consumedCarbs = 0
         consumedFat = 0
-        calculateDeficit()
+        meals = [.breakfast: [], .lunch: [], .dinner: [], .snack: []]
+        saveData()
     }
     
-    func setDailyGoal(_ goal: Int) {
-        dailyCalorieGoal = max(goal, 0)
-        calculateDeficit()
+    // Calculate remaining calories
+    var remainingCalories: Int {
+        return calorieTarget - consumedCalories
     }
     
-    func setMacroGoals(protein: Double, carbs: Double, fat: Double) {
-        proteinGoal = max(protein, 0)
-        carbsGoal = max(carbs, 0)
-        fatGoal = max(fat, 0)
+    // Calculate percentage of calorie goal
+    var caloriePercentage: Double {
+        return Double(consumedCalories) / Double(calorieTarget)
     }
     
-    // Calculate percentage of goal for each macro
+    // Calculate percentage of protein goal
     var proteinPercentage: Double {
-        return min((consumedProtein / proteinGoal) * 100, 100)
+        return consumedProtein / proteinTarget
     }
     
-    var carbsPercentage: Double {
-        return min((consumedCarbs / carbsGoal) * 100, 100)
+    // Calculate percentage of carb goal
+    var carbPercentage: Double {
+        return consumedCarbs / carbTarget
     }
     
+    // Calculate percentage of fat goal
     var fatPercentage: Double {
-        return min((consumedFat / fatGoal) * 100, 100)
-    }
-    
-    // Calculate macronutrient distribution (percentages of total calories)
-    var proteinCaloriePercentage: Double {
-        let totalCalories = Double(consumedCalories)
-        if totalCalories == 0 { return 0 }
-        return (consumedProtein * 4 / totalCalories) * 100
-    }
-    
-    var carbsCaloriePercentage: Double {
-        let totalCalories = Double(consumedCalories)
-        if totalCalories == 0 { return 0 }
-        return (consumedCarbs * 4 / totalCalories) * 100
-    }
-    
-    var fatCaloriePercentage: Double {
-        let totalCalories = Double(consumedCalories)
-        if totalCalories == 0 { return 0 }
-        return (consumedFat * 9 / totalCalories) * 100
-    }
-    
-    private func calculateDeficit() {
-        // Positive deficit means you're under your calorie goal (good)
-        // Negative deficit means you're over your calorie goal (bad)
-        calorieDeficit = dailyCalorieGoal - consumedCalories
-    }
-    
-    private func loadSavedData() {
-        // In a real app, this would load from UserDefaults or a database
-        // For now, we'll just use default values
-        dailyCalorieGoal = UserDefaults.standard.integer(forKey: "dailyCalorieGoal")
-        if dailyCalorieGoal == 0 {
-            dailyCalorieGoal = 2000 // Default value
-        }
-        
-        // Load macronutrient data
-        proteinGoal = UserDefaults.standard.double(forKey: "proteinGoal")
-        if proteinGoal == 0 { proteinGoal = 150.0 }
-        
-        carbsGoal = UserDefaults.standard.double(forKey: "carbsGoal")
-        if carbsGoal == 0 { carbsGoal = 200.0 }
-        
-        fatGoal = UserDefaults.standard.double(forKey: "fatGoal")
-        if fatGoal == 0 { fatGoal = 65.0 }
-        
-        // Check if we need to reset daily calories (new day)
-        let lastResetDate = UserDefaults.standard.object(forKey: "lastResetDate") as? Date
-        let calendar = Calendar.current
-        if let lastDate = lastResetDate, !calendar.isDateInToday(lastDate) {
-            // It's a new day, reset consumed calories
-            consumedCalories = 0
-            consumedProtein = 0
-            consumedCarbs = 0
-            consumedFat = 0
-        } else {
-            // Same day, load saved consumed calories
-            consumedCalories = UserDefaults.standard.integer(forKey: "consumedCalories")
-            consumedProtein = UserDefaults.standard.double(forKey: "consumedProtein")
-            consumedCarbs = UserDefaults.standard.double(forKey: "consumedCarbs")
-            consumedFat = UserDefaults.standard.double(forKey: "consumedFat")
-        }
-        
-        // Save current date as last reset date
-        UserDefaults.standard.set(Date(), forKey: "lastResetDate")
-    }
-    
-    func saveData() {
-        UserDefaults.standard.set(dailyCalorieGoal, forKey: "dailyCalorieGoal")
-        UserDefaults.standard.set(consumedCalories, forKey: "consumedCalories")
-        
-        // Save macronutrient data
-        UserDefaults.standard.set(proteinGoal, forKey: "proteinGoal")
-        UserDefaults.standard.set(carbsGoal, forKey: "carbsGoal")
-        UserDefaults.standard.set(fatGoal, forKey: "fatGoal")
-        
-        UserDefaults.standard.set(consumedProtein, forKey: "consumedProtein")
-        UserDefaults.standard.set(consumedCarbs, forKey: "consumedCarbs")
-        UserDefaults.standard.set(consumedFat, forKey: "consumedFat")
+        return consumedFat / fatTarget
     }
 } 
