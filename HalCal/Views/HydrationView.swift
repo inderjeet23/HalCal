@@ -277,7 +277,6 @@ struct WaterWave: Shape {
         
         let width = rect.width
         let height = rect.height
-        let midWidth = width / 2
         
         path.move(to: CGPoint(x: 0, y: height))
         

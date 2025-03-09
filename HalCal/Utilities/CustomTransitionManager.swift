@@ -139,7 +139,7 @@ class CustomDismissAnimator: NSObject, UIViewControllerAnimatedTransitioning {
     func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
         guard let fromViewController = transitionContext.viewController(forKey: .from) else { return }
         
-        let containerView = transitionContext.containerView
+        let _ = transitionContext.containerView
         let initialFrame = fromViewController.view.frame
         let finalFrame = initialFrame.offsetBy(dx: 0, dy: initialFrame.height)
         

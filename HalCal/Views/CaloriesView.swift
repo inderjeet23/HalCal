@@ -376,9 +376,8 @@ struct TabButton: View {
     CaloriesView(calorieModel: CalorieModel())
 }
 
-#Preview("Macro Nutrients View") {
+#Preview("Macro Nutrients View", traits: .sizeThatFits) {
     MacroNutrientsView(calorieModel: CalorieModel())
         .background(Constants.Colors.background)
-        .previewLayout(.sizeThatFits)
         .padding()
 } 

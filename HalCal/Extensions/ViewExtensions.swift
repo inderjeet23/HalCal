@@ -92,9 +92,9 @@ extension View {
         self.overlay(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.white.opacity(0.1),
+                    Color.white.opacity(0.05),
                     Color.clear,
-                    Color.black.opacity(0.1)
+                    Color.black.opacity(0.05)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
@@ -104,20 +104,7 @@ extension View {
     
     func glassPanelEffect() -> some View {
         self.background(
-            ZStack {
-                // Dark glass background
-                Constants.Colors.surfaceLight.opacity(0.7)
-                
-                // Subtle reflection
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.white.opacity(0.15),
-                        Color.clear
-                    ]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
+            Constants.Colors.surfaceLight.opacity(0.8)
         )
     }
     

@@ -4,6 +4,7 @@ enum TabItem: String, CaseIterable {
     case calories = "CALORIES"
     case activity = "ACTIVITY"
     case hydration = "HYDRATION"
+    case settings = "SETTINGS"
     // Removed macros tab for now
     
     var icon: String {
@@ -11,6 +12,7 @@ enum TabItem: String, CaseIterable {
         case .calories: return "flame.fill"
         case .activity: return "chart.bar.fill"
         case .hydration: return "drop.fill"
+        case .settings: return "gearshape.fill"
         }
     }
     
@@ -19,6 +21,7 @@ enum TabItem: String, CaseIterable {
         case .calories: return Constants.Colors.calorieAccent
         case .activity: return Constants.Colors.calorieAccent
         case .hydration: return Constants.Colors.turquoise
+        case .settings: return Color.gray
         }
     }
 }
