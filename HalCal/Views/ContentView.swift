@@ -164,14 +164,21 @@ struct ContentView: View {
                         let carbsAdded = calorieModel.consumedCarbs - previousCarbsTotal 
                         let fatAdded = calorieModel.consumedFat - previousFatTotal
                         
-                        // Only add a meal if something was added
-                        if caloriesAdded > 0 || proteinAdded > 0 || carbsAdded > 0 || fatAdded > 0 {
-                            addMealWithNutrients(
-                                calories: caloriesAdded,
-                                protein: proteinAdded,
-                                carbs: carbsAdded,
-                                fat: fatAdded
-                            )
+                        // Get the most recently added meal from the CalorieModel
+                        let allMeals: [Meal] = [MealType.breakfast, .lunch, .dinner, .snack]
+                            .flatMap { calorieModel.meals[$0] ?? [] }
+                        
+                        if let lastAddedMeal = allMeals.sorted(by: { $0.time > $1.time }).first {
+                            // Only add a meal if something was added
+                            if caloriesAdded > 0 || proteinAdded > 0 || carbsAdded > 0 || fatAdded > 0 {
+                                addMealWithNutrients(
+                                    calories: caloriesAdded,
+                                    protein: proteinAdded,
+                                    carbs: carbsAdded,
+                                    fat: fatAdded,
+                                    mealType: lastAddedMeal.type
+                                )
+                            }
                         }
                     }
             } else if selectedTab == .hydration {
@@ -241,17 +248,20 @@ struct ContentView: View {
     }
     
     // Add a meal with all nutrient data
-    private func addMealWithNutrients(calories: Int, protein: Double, carbs: Double, fat: Double) {
+    private func addMealWithNutrients(calories: Int, protein: Double, carbs: Double, fat: Double, mealType: MealType? = nil) {
         withAnimation {
+            // Determine meal type - use provided or guess based on time
+            let type = mealType ?? getMealTypeBasedOnTime()
+            
             // Create a meal with the actual nutrients added
             let newMeal = Meal(
-                name: getMealNameBasedOnTime(),
+                name: type.rawValue, // Use the raw value of the meal type enum as the name
                 calories: calories,
                 protein: protein,
                 carbs: carbs,
                 fat: fat,
                 time: Date(),
-                type: getMealTypeBasedOnTime()
+                type: type
             )
             
             meals.append(newMeal)
@@ -269,7 +279,7 @@ struct ContentView: View {
         } else if hour < 20 {
             return "Dinner"
         } else {
-            return "Evening Snack"
+            return "Snack"
         }
     }
     

@@ -11,10 +11,11 @@ import UIKit
 struct CaloriesView: View {
     @ObservedObject var calorieModel: CalorieModel
     @State private var selectedDay: Date = Date()
+    @State private var showingSettings = false
     
     var body: some View {
         VStack(spacing: 20) {
-            // Day selector
+            // Day selector with settings button
             HStack {
                 Button {
                     subtractDay()
@@ -31,11 +32,22 @@ struct CaloriesView: View {
                 
                 Spacer()
                 
-                Button {
-                    addDay()
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.white)
+                HStack {
+                    Button {
+                        addDay()
+                    } label: {
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.white)
+                    }
+                    
+                    // Settings button
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(.white)
+                            .padding(.leading, 8)
+                    }
                 }
             }
             .padding(.horizontal)
@@ -103,6 +115,9 @@ struct CaloriesView: View {
             Spacer()
         }
         .background(Constants.Colors.background)
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(calorieModel: calorieModel, hydrationModel: HydrationModel())
+        }
     }
     
     private var dayFormatter: DateFormatter {

@@ -12,6 +12,7 @@ struct HydrationView: View {
     @State private var selectedDay: Date = Date()
     @State private var showingAddSheet = false
     @State private var showingSubtractSheet = false
+    @State private var showingSettings = false
     
     var body: some View {
         ZStack {
@@ -20,8 +21,44 @@ struct HydrationView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: Constants.Layout.componentSpacing) {
-                // Day selector
-                DaySelector(selectedDay: $selectedDay)
+                // Day selector with settings button
+                HStack {
+                    Button {
+                        // Previous day
+                        selectedDay = Calendar.current.date(byAdding: .day, value: -1, to: selectedDay) ?? selectedDay
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.white)
+                    }
+                    
+                    Spacer()
+                    
+                    Text(dayFormatter.string(from: selectedDay))
+                        .font(Constants.Fonts.primaryLabel)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    HStack {
+                        Button {
+                            // Next day
+                            selectedDay = Calendar.current.date(byAdding: .day, value: 1, to: selectedDay) ?? selectedDay
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.white)
+                        }
+                        
+                        // Settings button
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundColor(.white)
+                                .padding(.leading, 8)
+                        }
+                    }
+                }
+                .padding(.horizontal, Constants.Layout.screenMargin)
                 
                 // Main content
                 VStack(spacing: Constants.Layout.componentSpacing) {
@@ -173,6 +210,15 @@ struct HydrationView: View {
             }
             .presentationDetents([.height(200)])
         }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(calorieModel: CalorieModel(), hydrationModel: hydrationModel)
+        }
+    }
+    
+    private var dayFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        return formatter
     }
 }
 
