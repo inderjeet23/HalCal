@@ -8,10 +8,6 @@
 import SwiftUI
 import UIKit
 
-enum AppTab {
-    case calories, activity, water
-}
-
 struct ContentView: View {
     @StateObject private var calorieModel = CalorieModel()
     @StateObject private var hydrationModel = HydrationModel()
@@ -41,6 +37,99 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 // Calories Tab
                 if selectedTab == .calories {
+                    ScrollView {
+                        VStack(spacing: Constants.Layout.componentSpacing) {
+                            // Date navigation
+                            HStack {
+                                Button {
+                                    // Previous day
+                                } label: {
+                                    Image(systemName: "chevron.left")
+                                        .foregroundColor(.white)
+                                }
+                                
+                                Spacer()
+                                
+                                Text("Sunday, Mar 9")
+                                    .font(Constants.Fonts.primaryLabel)
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                Button {
+                                    // Next day
+                                } label: {
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+                            
+                            // Calorie visualization - donut chart
+                            CalorieDonutChart(
+                                totalCalories: calorieModel.calorieTarget,
+                                remainingCalories: calorieModel.remainingCalories
+                            )
+                            .frame(height: 220)
+                            .padding(.vertical, 10)
+                            
+                            // Meal categories grid - ORIGINAL LAYOUT
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                                MealCategoryCard(
+                                    icon: "☕️",
+                                    title: "Breakfast",
+                                    calories: calorieModel.getMealCalories(for: .breakfast),
+                                    color: Color(red: 0.9, green: 0.9, blue: 1.0) // Light blue
+                                ) {
+                                    // Open add sheet with breakfast pre-selected
+                                    mealTypeForAdd = .breakfast
+                                    showingAddSheet = true
+                                }
+                                
+                                MealCategoryCard(
+                                    icon: "🥗",
+                                    title: "Lunch",
+                                    calories: calorieModel.getMealCalories(for: .lunch),
+                                    color: Color(red: 0.9, green: 1.0, blue: 0.9) // Light green
+                                ) {
+                                    // Open add sheet with lunch pre-selected
+                                    mealTypeForAdd = .lunch
+                                    showingAddSheet = true
+                                }
+                                
+                                MealCategoryCard(
+                                    icon: "🍲",
+                                    title: "Dinner",
+                                    calories: calorieModel.getMealCalories(for: .dinner),
+                                    color: Color(red: 0.9, green: 1.0, blue: 1.0) // Light cyan
+                                ) {
+                                    // Open add sheet with dinner pre-selected
+                                    mealTypeForAdd = .dinner
+                                    showingAddSheet = true
+                                }
+                                
+                                MealCategoryCard(
+                                    icon: "🥨",
+                                    title: "Snack",
+                                    calories: calorieModel.getMealCalories(for: .snack),
+                                    color: Color(red: 1.0, green: 0.9, blue: 1.0) // Light purple
+                                ) {
+                                    // Open add sheet with snack pre-selected
+                                    mealTypeForAdd = .snack
+                                    showingAddSheet = true
+                                }
+                            }
+                            .padding(.horizontal)
+                            
+                            // Add extra padding at bottom for floating button
+                            Spacer().frame(height: 80)
+                        }
+                    }
+                }
+                
+                // ACTIVITY Tab (with slim meal cards)
+                if selectedTab == .activity {
                     ScrollView {
                         VStack(spacing: Constants.Layout.componentSpacing) {
                             // Date navigation
