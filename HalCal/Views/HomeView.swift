@@ -115,9 +115,9 @@ struct HomeView: View {
                     
                     // Main circular display in the center
                     CircularCalorieDisplay(
-                        caloriesRemaining: calorieModel.caloriesRemaining,
-                        totalCalories: calorieModel.dailyCalorieGoal,
-                        calorieDeficit: calorieModel.calorieDeficit
+                        caloriesRemaining: calorieModel.remainingCalories,
+                        totalCalories: calorieModel.calorieTarget,
+                        calorieDeficit: calorieModel.remainingCalories
                     )
                     .frame(width: 300, height: 300)
                     

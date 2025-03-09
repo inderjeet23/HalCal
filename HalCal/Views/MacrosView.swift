@@ -5,6 +5,25 @@ struct MacrosView: View {
     @State private var showingAddMacrosSheet = false
     @State private var isRefreshing = false
     
+    // Calculate percentage of total calories for each macro
+    private var proteinCaloriePercentage: Double {
+        let totalCalories = Double(calorieModel.consumedCalories)
+        if totalCalories == 0 { return 0 }
+        return (calorieModel.consumedProtein * 4 / totalCalories) * 100
+    }
+    
+    private var carbsCaloriePercentage: Double {
+        let totalCalories = Double(calorieModel.consumedCalories)
+        if totalCalories == 0 { return 0 }
+        return (calorieModel.consumedCarbs * 4 / totalCalories) * 100
+    }
+    
+    private var fatCaloriePercentage: Double {
+        let totalCalories = Double(calorieModel.consumedCalories)
+        if totalCalories == 0 { return 0 }
+        return (calorieModel.consumedFat * 9 / totalCalories) * 100
+    }
+    
     var body: some View {
         ZStack {
             // Background with subtle texture
@@ -107,7 +126,7 @@ struct MacrosView: View {
                                 
                                 // Protein segment
                                 MacroArcView(
-                                    percentage: calorieModel.proteinCaloriePercentage,
+                                    percentage: proteinCaloriePercentage,
                                     startAngle: 0,
                                     color: Constants.Colors.blue
                                 )
@@ -115,16 +134,16 @@ struct MacrosView: View {
                                 
                                 // Carbs segment
                                 MacroArcView(
-                                    percentage: calorieModel.carbsCaloriePercentage,
-                                    startAngle: calorieModel.proteinCaloriePercentage * 3.6,
+                                    percentage: carbsCaloriePercentage,
+                                    startAngle: proteinCaloriePercentage * 3.6,
                                     color: Constants.Colors.amber
                                 )
                                 .frame(width: 150, height: 150)
                                 
                                 // Fat segment
                                 MacroArcView(
-                                    percentage: calorieModel.fatCaloriePercentage,
-                                    startAngle: (calorieModel.proteinCaloriePercentage + calorieModel.carbsCaloriePercentage) * 3.6,
+                                    percentage: fatCaloriePercentage,
+                                    startAngle: (proteinCaloriePercentage + carbsCaloriePercentage) * 3.6,
                                     color: Color(red: 0.2, green: 0.8, blue: 0.2) // Green color for fat
                                 )
                                 .frame(width: 150, height: 150)

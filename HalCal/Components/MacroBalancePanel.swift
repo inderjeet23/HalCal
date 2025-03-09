@@ -7,13 +7,32 @@ struct MacroBalancePanel: View {
     private var macrosInBalance: Bool {
         // Check if macros are within acceptable ranges
         // For example: protein 30-40%, carbs 40-50%, fat 20-30%
-        let proteinPercent = calorieModel.proteinCaloriePercentage
-        let carbsPercent = calorieModel.carbsCaloriePercentage
-        let fatPercent = calorieModel.fatCaloriePercentage
+        let proteinPercent = proteinCaloriePercentage
+        let carbsPercent = carbsCaloriePercentage
+        let fatPercent = fatCaloriePercentage
         
         return (proteinPercent >= 25 && proteinPercent <= 40) &&
                (carbsPercent >= 35 && carbsPercent <= 55) &&
                (fatPercent >= 15 && fatPercent <= 35)
+    }
+    
+    // Calculate percentage of total calories for each macro
+    private var proteinCaloriePercentage: Double {
+        let totalCalories = Double(calorieModel.consumedCalories)
+        if totalCalories == 0 { return 0 }
+        return (calorieModel.consumedProtein * 4 / totalCalories) * 100
+    }
+    
+    private var carbsCaloriePercentage: Double {
+        let totalCalories = Double(calorieModel.consumedCalories)
+        if totalCalories == 0 { return 0 }
+        return (calorieModel.consumedCarbs * 4 / totalCalories) * 100
+    }
+    
+    private var fatCaloriePercentage: Double {
+        let totalCalories = Double(calorieModel.consumedCalories)
+        if totalCalories == 0 { return 0 }
+        return (calorieModel.consumedFat * 9 / totalCalories) * 100
     }
     
     var body: some View {
@@ -101,8 +120,8 @@ struct MacroBalancePanel: View {
                 label: "PROTEIN",
                 color: Constants.Colors.blue,
                 currentAmount: calorieModel.consumedProtein,
-                targetAmount: calorieModel.proteinGoal,
-                percentOfCalories: calorieModel.proteinCaloriePercentage
+                targetAmount: calorieModel.proteinTarget,
+                percentOfCalories: proteinCaloriePercentage
             )
             
             // Carbs
@@ -110,8 +129,8 @@ struct MacroBalancePanel: View {
                 label: "CARBS",
                 color: Constants.Colors.amber,
                 currentAmount: calorieModel.consumedCarbs,
-                targetAmount: calorieModel.carbsGoal,
-                percentOfCalories: calorieModel.carbsCaloriePercentage
+                targetAmount: calorieModel.carbTarget,
+                percentOfCalories: carbsCaloriePercentage
             )
             
             // Fat - using green color as requested
@@ -119,8 +138,8 @@ struct MacroBalancePanel: View {
                 label: "FAT",
                 color: Color(red: 0.2, green: 0.8, blue: 0.2), // Green color
                 currentAmount: calorieModel.consumedFat,
-                targetAmount: calorieModel.fatGoal,
-                percentOfCalories: calorieModel.fatCaloriePercentage
+                targetAmount: calorieModel.fatTarget,
+                percentOfCalories: fatCaloriePercentage
             )
             
             // Divider
@@ -152,7 +171,7 @@ struct MacroBalancePanel: View {
                 label: "PROTEIN",
                 color: Constants.Colors.blue,
                 currentAmount: calorieModel.consumedProtein,
-                targetAmount: calorieModel.proteinGoal
+                targetAmount: calorieModel.proteinTarget
             )
             
             // Carbs daily progress
@@ -160,7 +179,7 @@ struct MacroBalancePanel: View {
                 label: "CARBS",
                 color: Constants.Colors.amber,
                 currentAmount: calorieModel.consumedCarbs,
-                targetAmount: calorieModel.carbsGoal
+                targetAmount: calorieModel.carbTarget
             )
             
             // Fat daily progress
@@ -168,7 +187,7 @@ struct MacroBalancePanel: View {
                 label: "FAT",
                 color: Color(red: 0.2, green: 0.8, blue: 0.2), // Green color
                 currentAmount: calorieModel.consumedFat,
-                targetAmount: calorieModel.fatGoal
+                targetAmount: calorieModel.fatTarget
             )
             
             // Total calories

@@ -65,7 +65,7 @@ struct SettingsView: View {
     init(calorieModel: CalorieModel, hydrationModel: HydrationModel) {
         self.calorieModel = calorieModel
         self.hydrationModel = hydrationModel
-        _dailyGoal = State(initialValue: "\(calorieModel.dailyCalorieGoal)")
+        _dailyGoal = State(initialValue: "\(calorieModel.calorieTarget)")
         _hydrationGoal = State(initialValue: String(format: "%.1f", hydrationModel.dailyGoal))
     }
     
@@ -438,7 +438,7 @@ struct SettingsView: View {
                             proposedCalorieGoal = profileManager.calculateBMR()
                             profileManager.calorieGoal = proposedCalorieGoal
                             profileManager.saveUserProfile()
-                            calorieModel.setDailyGoal(proposedCalorieGoal)
+                            calorieModel.calorieTarget = proposedCalorieGoal
                             calorieModel.saveData()
                         } label: {
                             Text("SET AS DAILY GOAL")
@@ -535,7 +535,7 @@ struct SettingsView: View {
                             } else {
                                 profileManager.calorieGoal = proposedCalorieGoal
                                 profileManager.saveUserProfile()
-                                calorieModel.setDailyGoal(proposedCalorieGoal)
+                                calorieModel.calorieTarget = proposedCalorieGoal
                                 calorieModel.saveData()
                             }
                         } label: {
@@ -553,7 +553,7 @@ struct SettingsView: View {
                             Button("Confirm", role: .destructive) {
                                 profileManager.calorieGoal = proposedCalorieGoal
                                 profileManager.saveUserProfile()
-                                calorieModel.setDailyGoal(proposedCalorieGoal)
+                                calorieModel.calorieTarget = proposedCalorieGoal
                                 calorieModel.saveData()
                             }
                         } message: {

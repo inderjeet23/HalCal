@@ -351,6 +351,43 @@ struct ValueBadge: View {
     }
 }
 
+// Button for selecting macro input type
+struct MacroButton: View {
+    let title: String
+    let isSelected: Bool
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(isSelected ? .white : .gray)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 20)
+                .background(isSelected ? color : Constants.Colors.cardBackground)
+                .cornerRadius(Constants.Layout.cornerRadius)
+        }
+    }
+}
+
+// Keypad button component
+struct KeypadButton: View {
+    let text: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(text)
+                .font(.system(size: 28, weight: .medium))
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black.opacity(0.3))
+                .cornerRadius(12)
+        }
+    }
+}
+
 #Preview {
     AddCaloriesView(calorieModel: CalorieModel())
 } 
