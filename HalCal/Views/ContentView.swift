@@ -46,11 +46,9 @@ struct ContentView: View {
                     HydrationView(hydrationModel: hydrationModel)
                         .transition(.opacity)
                 }
-                
-                // Space for tab bar
-                Spacer(minLength: tabBarHeight)
             }
             .ignoresSafeArea(.keyboard)
+            .padding(.bottom, tabBarHeight) // Add padding to make space for tab bar
             
             // Integrated tab and card component
             IntegratedTabCardView(
@@ -92,6 +90,7 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 16)
             }
+            .edgesIgnoringSafeArea(.bottom) // Make sure it extends to bottom edge
         }
         .sheet(isPresented: $showingAddSheet) {
             if selectedTab == .calories {
