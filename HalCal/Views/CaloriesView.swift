@@ -6,113 +6,140 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct CaloriesView: View {
     @ObservedObject var calorieModel: CalorieModel
     @State private var selectedDay: Date = Date()
     @State private var showingSettings = false
     
+    // Sample username - in a real app, this would come from UserProfileManager
+    private let username = "Katherine"
+    
     var body: some View {
-        VStack(spacing: 20) {
-            // Day selector with settings button
-            HStack {
-                Button {
-                    subtractDay()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.white)
-                }
-                
-                Spacer()
-                
-                Text(dayFormatter.string(from: selectedDay))
-                    .font(Constants.Fonts.primaryLabel)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
+        ScrollView {
+            VStack(spacing: 20) {
+                // Day selector with settings button
                 HStack {
                     Button {
-                        addDay()
+                        subtractDay()
                     } label: {
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.left")
                             .foregroundColor(.white)
                     }
                     
-                    // Settings button
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundColor(.white)
-                            .padding(.leading, 8)
+                    Spacer()
+                    
+                    Text(dayFormatter.string(from: selectedDay))
+                        .font(Constants.Fonts.primaryLabel)
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    HStack {
+                        Button {
+                            addDay()
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.white)
+                        }
+                        
+                        // Settings button
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundColor(.white)
+                                .padding(.leading, 8)
+                        }
                     }
                 }
-            }
-            .padding(.horizontal)
-            
-            // Calories remaining display
-            VStack(spacing: 8) {
-                Text("Calories Remaining")
-                    .font(Constants.Fonts.statusReadout)
-                    .foregroundColor(.gray)
+                .padding(.horizontal)
                 
-                Text("\(calorieModel.remainingCalories)")
-                    .font(.system(size: 64, weight: .bold))
-                    .foregroundColor(calorieModel.remainingCalories >= 0 ? .white : Constants.Colors.alertRed)
-                
-                HStack(spacing: 8) {
-                    Text("Goal: \(calorieModel.calorieTarget)")
-                        .foregroundColor(Constants.Colors.calorieOrange)
+                // Personal greeting
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Hello,")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Color.gray.opacity(0.8))
+                        
+                        Text(username)
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                     
-                    Text("•")
-                        .foregroundColor(.gray)
+                    Spacer()
                     
-                    Text("Food: \(calorieModel.consumedCalories)")
-                        .foregroundColor(Constants.Colors.calorieOrange)
+                    // Date display
+                    Text("\(dayNumber)\n\(dayMonth)")
+                        .font(.system(size: 16, weight: .semibold))
+                        .multilineTextAlignment(.center)
+                        .foregroundColor(.black)
+                        .padding(12)
+                        .background(Color.white.opacity(0.9))
+                        .cornerRadius(16)
                 }
-                .font(Constants.Fonts.systemMessage)
+                .padding(.horizontal)
+                .padding(.top, 8)
+                
+                // Calorie visualization - donut chart
+                CalorieDonutChart(
+                    totalCalories: calorieModel.calorieTarget,
+                    remainingCalories: calorieModel.remainingCalories
+                )
+                .frame(height: 220)
+                .padding(.vertical, 10)
+                
+                // Tab selector for this view
+                HStack(spacing: 24) {
+                    TabButton(title: "Meals", isSelected: true)
+                    TabButton(title: "Activity", isSelected: false)
+                    TabButton(title: "Water", isSelected: false)
+                }
+                .padding(.horizontal)
+                
+                // Meal categories grid
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                    MealCategoryCard(
+                        icon: "☕️",
+                        title: "Breakfast",
+                        calories: getMealCalories(for: .breakfast),
+                        color: Color(red: 0.9, green: 0.9, blue: 1.0) // Light blue
+                    ) {
+                        // Add breakfast action
+                    }
+                    
+                    MealCategoryCard(
+                        icon: "🥗",
+                        title: "Lunch",
+                        calories: getMealCalories(for: .lunch),
+                        color: Color(red: 0.9, green: 1.0, blue: 0.9) // Light green
+                    ) {
+                        // Add lunch action
+                    }
+                    
+                    MealCategoryCard(
+                        icon: "🍲",
+                        title: "Dinner",
+                        calories: getMealCalories(for: .dinner),
+                        color: Color(red: 0.9, green: 1.0, blue: 1.0) // Light cyan
+                    ) {
+                        // Add dinner action
+                    }
+                    
+                    MealCategoryCard(
+                        icon: "🥨",
+                        title: "Snack",
+                        calories: getMealCalories(for: .snack),
+                        color: Color(red: 1.0, green: 0.9, blue: 1.0) // Light purple
+                    ) {
+                        // Add snack action
+                    }
+                }
+                .padding(.horizontal)
+                
+                // Add extra padding at bottom to ensure content isn't hidden by tab bar
+                Color.clear.frame(height: 100)
             }
-            .padding(.vertical, 20)
-            
-            // Macros summary
-            VStack(spacing: 16) {
-                Text("Macronutrients")
-                    .font(Constants.Fonts.sectionHeader)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                // Protein
-                MacroProgressBar(
-                    title: "Protein",
-                    consumed: calorieModel.consumedProtein,
-                    target: calorieModel.proteinTarget,
-                    color: Constants.Colors.turquoise
-                )
-                
-                // Carbs
-                MacroProgressBar(
-                    title: "Carbs",
-                    consumed: calorieModel.consumedCarbs,
-                    target: calorieModel.carbTarget,
-                    color: Color.purple
-                )
-                
-                // Fat
-                MacroProgressBar(
-                    title: "Fat",
-                    consumed: calorieModel.consumedFat,
-                    target: calorieModel.fatTarget,
-                    color: Color.yellow
-                )
-            }
-            .padding()
-            .background(Constants.Colors.surfaceMid)
-            .cornerRadius(Constants.Layout.cornerRadius)
-            .padding(.horizontal)
-            
-            Spacer()
         }
         .background(Constants.Colors.background)
         .sheet(isPresented: $showingSettings) {
@@ -126,65 +153,59 @@ struct CaloriesView: View {
         return formatter
     }
     
+    private var dayNumber: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter.string(from: selectedDay)
+    }
+    
+    private var dayMonth: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        return formatter.string(from: selectedDay)
+    }
+    
     private func addDay() {
         withAnimation {
             selectedDay = Calendar.current.date(byAdding: .day, value: 1, to: selectedDay) ?? selectedDay
-            // In a real app, we would load data for this day
         }
     }
     
     private func subtractDay() {
         withAnimation {
             selectedDay = Calendar.current.date(byAdding: .day, value: -1, to: selectedDay) ?? selectedDay
-            // In a real app, we would load data for this day
         }
+    }
+    
+    // Get calories for a specific meal type
+    private func getMealCalories(for type: MealType) -> Int {
+        // Sum calories from all meals of this type
+        let meals = calorieModel.meals[type] ?? []
+        return meals.reduce(0) { $0 + $1.calories }
     }
 }
 
-struct MacroProgressBar: View {
+// Tab button for meal/activity/water selector
+struct TabButton: View {
     let title: String
-    let consumed: Double
-    let target: Double
-    let color: Color
-    
-    private var percentage: Double {
-        min(consumed / target, 1.0)
-    }
+    let isSelected: Bool
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title)
-                    .font(Constants.Fonts.statusReadout)
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Text("\(Int(consumed))g / \(Int(target))g")
-                    .font(Constants.Fonts.statusReadout)
-                    .foregroundColor(.gray)
-            }
-            
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Background
-                    Capsule()
-                        .fill(Color.black.opacity(0.3))
-                        .frame(height: 12)
-                    
-                    // Fill
-                    Capsule()
-                        .fill(color)
-                        .frame(width: geometry.size.width * percentage, height: 12)
-                        .animation(.easeInOut, value: percentage)
-                }
-            }
-            .frame(height: 12)
-        }
+        Text(title)
+            .font(.system(size: 18, weight: isSelected ? .bold : .medium))
+            .foregroundColor(isSelected ? .white : .gray)
+            .padding(.bottom, 8)
+            .overlay(
+                Rectangle()
+                    .frame(height: 3)
+                    .foregroundColor(isSelected ? Constants.Colors.calorieOrange : .clear)
+                    .offset(y: 4),
+                alignment: .bottom
+            )
     }
 }
 
+// Preview
 #Preview {
     CaloriesView(calorieModel: CalorieModel())
 } 
