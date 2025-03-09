@@ -81,7 +81,7 @@ struct IntegratedTabCardView<CardContent: View>: View {
                 .shadow(color: Color.black.opacity(0.05), radius: 3, y: -2)
                 .zIndex(0)
             }
-            .frame(height: geometry.size.height)
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
             .gesture(
                 DragGesture()
                     .onChanged { value in
