@@ -25,7 +25,7 @@ struct SimplifiedTabBarWithContextualAdd: View {
                 }) {
                     Image(systemName: "flame.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.5))
+                        .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieAccent : Color.gray.opacity(0.5))
                         .frame(maxWidth: .infinity)
                         .padding(.top, 6)
                 }

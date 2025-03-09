@@ -14,7 +14,7 @@ enum TabItem: String, CaseIterable {
     
     var color: Color {
         switch self {
-        case .calories: return Constants.Colors.calorieOrange
+        case .calories: return Constants.Colors.calorieAccent
         case .hydration: return Constants.Colors.turquoise
         }
     }
@@ -46,11 +46,11 @@ struct TabBarWithContextualAdd: View {
                     VStack(spacing: 4) {
                         Image(systemName: "flame.fill")
                             .font(.system(size: 22))
-                            .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.5))
+                            .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieAccent : Color.gray.opacity(0.5))
                         
                         Text("Calories")
                             .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.7))
+                            .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieAccent : Color.gray.opacity(0.7))
                     }
                     .frame(maxWidth: .infinity)
                 }

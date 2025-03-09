@@ -11,9 +11,11 @@ struct CaloriesView: View {
     @ObservedObject var calorieModel: CalorieModel
     @State private var selectedDay: Date = Date()
     @State private var showingSettings = false
+    @State private var showingAddSheet = false
+    @State private var mealTypeForAdd: MealType = .snack
     
     // Sample username - in a real app, this would come from UserProfileManager
-    private let username = "Katherine"
+    private let username = "Inder"
     
     var body: some View {
         ScrollView {
@@ -105,7 +107,9 @@ struct CaloriesView: View {
                         calories: calorieModel.getMealCalories(for: .breakfast),
                         color: Color(red: 0.9, green: 0.9, blue: 1.0) // Light blue
                     ) {
-                        // Add breakfast action
+                        // Open add sheet with breakfast pre-selected
+                        mealTypeForAdd = .breakfast
+                        showingAddSheet = true
                     }
                     
                     MealCategoryCard(
@@ -114,7 +118,9 @@ struct CaloriesView: View {
                         calories: calorieModel.getMealCalories(for: .lunch),
                         color: Color(red: 0.9, green: 1.0, blue: 0.9) // Light green
                     ) {
-                        // Add lunch action
+                        // Open add sheet with lunch pre-selected
+                        mealTypeForAdd = .lunch
+                        showingAddSheet = true
                     }
                     
                     MealCategoryCard(
@@ -123,7 +129,9 @@ struct CaloriesView: View {
                         calories: calorieModel.getMealCalories(for: .dinner),
                         color: Color(red: 0.9, green: 1.0, blue: 1.0) // Light cyan
                     ) {
-                        // Add dinner action
+                        // Open add sheet with dinner pre-selected
+                        mealTypeForAdd = .dinner
+                        showingAddSheet = true
                     }
                     
                     MealCategoryCard(
@@ -132,7 +140,9 @@ struct CaloriesView: View {
                         calories: calorieModel.getMealCalories(for: .snack),
                         color: Color(red: 1.0, green: 0.9, blue: 1.0) // Light purple
                     ) {
-                        // Add snack action
+                        // Open add sheet with snack pre-selected
+                        mealTypeForAdd = .snack
+                        showingAddSheet = true
                     }
                 }
                 .padding(.horizontal)
@@ -164,6 +174,10 @@ struct CaloriesView: View {
         .background(Constants.Colors.background)
         .sheet(isPresented: $showingSettings) {
             SettingsView(calorieModel: calorieModel, hydrationModel: HydrationModel())
+        }
+        .sheet(isPresented: $showingAddSheet) {
+            // Pass the pre-selected meal type to AddCaloriesView
+            AddCaloriesView(calorieModel: calorieModel, initialMealType: mealTypeForAdd)
         }
     }
     
@@ -244,11 +258,11 @@ struct MealItemRow: View {
         HStack {
             // Circle with meal type icon
             Circle()
-                .fill(Constants.Colors.calorieOrange.opacity(0.2))
+                .fill(Constants.Colors.calorieAccent.opacity(0.2))
                 .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: mealTypeIcon(for: meal.type))
-                        .foregroundColor(Constants.Colors.calorieOrange)
+                        .foregroundColor(Constants.Colors.calorieAccent)
                 )
             
             VStack(alignment: .leading) {
@@ -307,7 +321,7 @@ struct TabButton: View {
             .overlay(
                 Rectangle()
                     .frame(height: 3)
-                    .foregroundColor(isSelected ? Constants.Colors.calorieOrange : .clear)
+                    .foregroundColor(isSelected ? Constants.Colors.calorieAccent : .clear)
                     .offset(y: 4),
                 alignment: .bottom
             )

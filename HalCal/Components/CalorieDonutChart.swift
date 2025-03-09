@@ -35,7 +35,7 @@ struct CalorieDonutChart: View {
             Circle()
                 .trim(from: 0, to: min(CGFloat(consumedPercentage), 1.0))
                 .stroke(
-                    Constants.Colors.calorieOrange,
+                    Constants.Colors.calorieAccent,
                     style: StrokeStyle(lineWidth: 28, lineCap: .round)
                 )
                 .frame(width: 180, height: 180)
@@ -77,7 +77,7 @@ struct CalorieDonutChart: View {
                         
                         Text("\(consumedCalories) kcal")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(Constants.Colors.calorieOrange)
+                            .foregroundColor(Constants.Colors.calorieAccent)
                     }
                 }
                 .offset(y: 120)

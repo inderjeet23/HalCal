@@ -47,7 +47,7 @@ struct SettingsView: View {
                                 TextField("Calories", text: $calorieGoal)
                                     .keyboardType(.numberPad)
                                     .multilineTextAlignment(.trailing)
-                                    .foregroundColor(Constants.Colors.calorieOrange)
+                                    .foregroundColor(Constants.Colors.calorieAccent)
                                     .onChange(of: calorieGoal) { _, newValue in
                                         if let newGoal = Int(newValue) {
                                             calorieModel.calorieTarget = newGoal
@@ -88,7 +88,7 @@ struct SettingsView: View {
                                     Spacer()
                                     
                                     Image(systemName: "arrow.counterclockwise")
-                                        .foregroundColor(Constants.Colors.calorieOrange)
+                                        .foregroundColor(Constants.Colors.calorieAccent)
                                 }
                             }
                             .confirmationDialog(

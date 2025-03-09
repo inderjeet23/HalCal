@@ -26,10 +26,10 @@ struct MealCategoryCard: View {
                     
                     // Plus button for adding
                     Image(systemName: "plus")
-                        .foregroundColor(Constants.Colors.calorieOrange)
+                        .foregroundColor(Constants.Colors.calorieAccent)
                         .font(.system(size: 16, weight: .medium))
                         .padding(6)
-                        .background(Constants.Colors.calorieOrange.opacity(0.15))
+                        .background(Constants.Colors.calorieAccent.opacity(0.15))
                         .clipShape(Circle())
                 }
                 

@@ -20,7 +20,8 @@ struct Constants {
         static let secondaryText = Color.white.opacity(0.7)
         
         // Accent colors
-        static let calorieOrange = Color(hex: "FF8500") // Vibrant orange for calories
+        static let calorieAccent = Color(hex: "3CBBB1") // New teal color
+        static let calorieOrange = Color(hex: "3CBBB1") // For backward compatibility
         static let turquoise = Color(hex: "30D5C8") // Turquoise for macros/hydration
         static let addButton = Color(hex: "7ED321") // Green for add buttons
         

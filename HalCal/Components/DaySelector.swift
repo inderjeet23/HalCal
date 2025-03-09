@@ -62,7 +62,7 @@ struct DayIndicator: View {
             
             ZStack {
                 Circle()
-                    .fill(isSelected ? Constants.Colors.calorieOrange : Color.clear)
+                    .fill(isSelected ? Constants.Colors.calorieAccent : Color.clear)
                     .frame(width: Constants.Layout.dayIndicatorSize,
                            height: Constants.Layout.dayIndicatorSize)
                 

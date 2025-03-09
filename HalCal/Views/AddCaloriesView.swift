@@ -31,7 +31,7 @@ enum InputMode: String, CaseIterable, Identifiable {
     
     var color: Color {
         switch self {
-        case .calories: return Constants.Colors.calorieOrange
+        case .calories: return Constants.Colors.calorieAccent
         case .protein, .carbs, .fat: return Constants.Colors.turquoise
         }
     }
@@ -66,6 +66,12 @@ struct AddCaloriesView: View {
     private let keypadButtonSize: CGFloat = 70
     private let selectorHeight: CGFloat = 54
     
+    init(calorieModel: CalorieModel, initialMealType: MealType = .snack) {
+        self.calorieModel = calorieModel
+        // Use the _selectedMealType syntax to initialize the @State property
+        _selectedMealType = State(initialValue: initialMealType)
+    }
+    
     var body: some View {
         VStack(spacing: 24) {
             // Header
@@ -88,7 +94,7 @@ struct AddCaloriesView: View {
             // Already added values display
             HStack(spacing: 12) {
                 if caloriesValue > 0 {
-                    ValueBadge(value: "\(caloriesValue)kcal", color: Constants.Colors.calorieOrange)
+                    ValueBadge(value: "\(caloriesValue)kcal", color: Constants.Colors.calorieAccent)
                 }
                 if proteinValue > 0 {
                     ValueBadge(value: "\(Int(proteinValue))g P", color: Constants.Colors.turquoise)
@@ -143,7 +149,7 @@ struct AddCaloriesView: View {
                     MacroButton(
                         title: "Calories",
                         isSelected: currentInputMode == .calories,
-                        color: Constants.Colors.calorieOrange
+                        color: Constants.Colors.calorieAccent
                     ) {
                         // Save current value before switching
                         saveCurrentValue()
