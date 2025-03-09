@@ -365,7 +365,7 @@ struct MacroButton: View {
                 .foregroundColor(isSelected ? .white : .gray)
                 .padding(.vertical, 14)
                 .padding(.horizontal, 20)
-                .background(isSelected ? color : Constants.Colors.cardBackground)
+                .background(isSelected ? color : Constants.Colors.surfaceLight.opacity(0.3))
                 .cornerRadius(Constants.Layout.cornerRadius)
         }
     }

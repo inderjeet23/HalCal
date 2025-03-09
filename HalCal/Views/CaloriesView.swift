@@ -43,7 +43,7 @@ struct CaloriesView: View {
             // Calories remaining display
             VStack(spacing: 8) {
                 Text("Calories Remaining")
-                    .font(Constants.Fonts.secondaryLabel)
+                    .font(Constants.Fonts.statusReadout)
                     .foregroundColor(.gray)
                 
                 Text("\(calorieModel.remainingCalories)")
@@ -60,14 +60,14 @@ struct CaloriesView: View {
                     Text("Food: \(calorieModel.consumedCalories)")
                         .foregroundColor(Constants.Colors.calorieOrange)
                 }
-                .font(Constants.Fonts.tertiaryLabel)
+                .font(Constants.Fonts.systemMessage)
             }
             .padding(.vertical, 20)
             
             // Macros summary
             VStack(spacing: 16) {
                 Text("Macronutrients")
-                    .font(Constants.Fonts.secondaryLabel)
+                    .font(Constants.Fonts.sectionHeader)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
@@ -140,13 +140,13 @@ struct MacroProgressBar: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(title)
-                    .font(Constants.Fonts.tertiaryLabel)
+                    .font(Constants.Fonts.statusReadout)
                     .foregroundColor(.white)
                 
                 Spacer()
                 
                 Text("\(Int(consumed))g / \(Int(target))g")
-                    .font(Constants.Fonts.tertiaryLabel)
+                    .font(Constants.Fonts.statusReadout)
                     .foregroundColor(.gray)
             }
             
