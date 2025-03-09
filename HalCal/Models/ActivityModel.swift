@@ -10,125 +10,95 @@ import SwiftUI
 import Combine
 
 class ActivityModel: ObservableObject {
-    @Published var steps: Int {
-        didSet {
-            saveData()
-        }
-    }
+    // Published properties to track activity metrics
+    @Published var steps: Int = 0
+    @Published var exerciseMinutes: Int = 0
+    @Published var activeCalories: Int = 0
+    @Published var standHours: Int = 0
     
-    @Published var activeHours: Int {
-        didSet {
-            saveData()
-        }
-    }
+    // Activity goal settings
+    @Published var dailyStepGoal: Int = 10000
+    @Published var dailyExerciseGoal: Int = 30
+    @Published var dailyActiveCalorieGoal: Int = 500
+    @Published var dailyStandGoal: Int = 12
     
-    @Published var goalSteps: Int {
-        didSet {
-            saveData()
-        }
-    }
-    
-    @Published var mealLog: [String: Bool] = [
-        "breakfast": false,
-        "lunch": false,
-        "dinner": false,
-        "snacks": false
-    ] {
-        didSet {
-            saveData()
-        }
-    }
-    
-    private let stepsKey = "HalCal.steps"
-    private let activeHoursKey = "HalCal.activeHours"
-    private let goalStepsKey = "HalCal.goalSteps"
-    private let mealLogKey = "HalCal.mealLog"
-    
+    // Initialize with default values
     init() {
-        // Load saved data or use defaults
-        self.steps = UserDefaults.standard.integer(forKey: stepsKey)
-        self.activeHours = UserDefaults.standard.integer(forKey: activeHoursKey)
-        self.goalSteps = UserDefaults.standard.integer(forKey: goalStepsKey)
-        
-        if self.goalSteps == 0 {
-            self.goalSteps = 10000 // Default goal
-        }
-        
-        if let savedMealLog = UserDefaults.standard.dictionary(forKey: mealLogKey) as? [String: Bool] {
-            self.mealLog = savedMealLog
-        }
-        
-        // Check if it's a new day and reset if needed
-        checkAndResetForNewDay()
-        
-        // Start a timer to periodically update active hours
-        startActiveHoursTimer()
+        // In a real app, we would load saved data here
+        loadData()
     }
     
-    func saveData() {
+    // Record a new activity
+    func addActivity(steps: Int = 0, exerciseMinutes: Int = 0, activeCalories: Int = 0, standHours: Int = 0) {
+        self.steps += steps
+        self.exerciseMinutes += exerciseMinutes
+        self.activeCalories += activeCalories
+        self.standHours += min(standHours, 24 - self.standHours) // Can't exceed 24 hours
+        
+        saveData()
+    }
+    
+    // Reset activity data for a new day
+    func resetForDay() {
+        steps = 0
+        exerciseMinutes = 0
+        activeCalories = 0
+        standHours = 0
+        
+        saveData()
+    }
+    
+    // Calculate progress percentages
+    var stepProgress: Double {
+        return min(Double(steps) / Double(dailyStepGoal), 1.0)
+    }
+    
+    var exerciseProgress: Double {
+        return min(Double(exerciseMinutes) / Double(dailyExerciseGoal), 1.0)
+    }
+    
+    var calorieProgress: Double {
+        return min(Double(activeCalories) / Double(dailyActiveCalorieGoal), 1.0)
+    }
+    
+    var standProgress: Double {
+        return min(Double(standHours) / Double(dailyStandGoal), 1.0)
+    }
+    
+    // Persistence methods (simple UserDefaults implementation)
+    private func saveData() {
         let defaults = UserDefaults.standard
-        defaults.set(steps, forKey: stepsKey)
-        defaults.set(activeHours, forKey: activeHoursKey)
-        defaults.set(goalSteps, forKey: goalStepsKey)
+        defaults.set(steps, forKey: "activity_steps")
+        defaults.set(exerciseMinutes, forKey: "activity_exerciseMinutes")
+        defaults.set(activeCalories, forKey: "activity_activeCalories")
+        defaults.set(standHours, forKey: "activity_standHours")
         
-        if let encoded = try? JSONEncoder().encode(mealLog) {
-            defaults.set(encoded, forKey: mealLogKey)
-        }
+        // Save goals too
+        defaults.set(dailyStepGoal, forKey: "activity_dailyStepGoal")
+        defaults.set(dailyExerciseGoal, forKey: "activity_dailyExerciseGoal")
+        defaults.set(dailyActiveCalorieGoal, forKey: "activity_dailyActiveCalorieGoal")
+        defaults.set(dailyStandGoal, forKey: "activity_dailyStandGoal")
     }
     
-    private func checkAndResetForNewDay() {
-        let lastOpenDateKey = "HalCal.lastOpenDate"
-        let today = Calendar.current.startOfDay(for: Date())
+    private func loadData() {
+        let defaults = UserDefaults.standard
+        steps = defaults.integer(forKey: "activity_steps")
+        exerciseMinutes = defaults.integer(forKey: "activity_exerciseMinutes")
+        activeCalories = defaults.integer(forKey: "activity_activeCalories")
+        standHours = defaults.integer(forKey: "activity_standHours")
         
-        if let lastOpenDate = UserDefaults.standard.object(forKey: lastOpenDateKey) as? Date {
-            let lastOpenDay = Calendar.current.startOfDay(for: lastOpenDate)
-            
-            if today != lastOpenDay {
-                // It's a new day, reset daily values
-                steps = 0
-                activeHours = 0
-                mealLog = [
-                    "breakfast": false,
-                    "lunch": false,
-                    "dinner": false,
-                    "snacks": false
-                ]
-            }
+        // Load goals if they exist
+        if defaults.object(forKey: "activity_dailyStepGoal") != nil {
+            dailyStepGoal = defaults.integer(forKey: "activity_dailyStepGoal")
         }
-        
-        // Save today's date
-        UserDefaults.standard.set(today, forKey: lastOpenDateKey)
-    }
-    
-    private var activeHoursTimer: Timer?
-    
-    private func startActiveHoursTimer() {
-        // Check active status every 15 minutes
-        activeHoursTimer = Timer.scheduledTimer(withTimeInterval: 15 * 60, repeats: true) { [weak self] _ in
-            self?.incrementActiveHoursIfNeeded()
+        if defaults.object(forKey: "activity_dailyExerciseGoal") != nil {
+            dailyExerciseGoal = defaults.integer(forKey: "activity_dailyExerciseGoal")
         }
-    }
-    
-    private func incrementActiveHoursIfNeeded() {
-        // In a real app, this would check if the user has been active
-        // For this demo, we'll just increment randomly to simulate activity
-        if activeHours < 12 && Int.random(in: 0...3) == 0 {
-            activeHours += 1
+        if defaults.object(forKey: "activity_dailyActiveCalorieGoal") != nil {
+            dailyActiveCalorieGoal = defaults.integer(forKey: "activity_dailyActiveCalorieGoal")
         }
-    }
-    
-    func addSteps(_ count: Int) {
-        steps += count
-    }
-    
-    func logMeal(_ meal: String) {
-        if var currentLog = mealLog[meal.lowercased()] {
-            currentLog = true
-            mealLog[meal.lowercased()] = currentLog
+        if defaults.object(forKey: "activity_dailyStandGoal") != nil {
+            dailyStandGoal = defaults.integer(forKey: "activity_dailyStandGoal")
         }
-    }
-    
-    deinit {
-        activeHoursTimer?.invalidate()
     }
 } 
