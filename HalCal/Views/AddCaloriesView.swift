@@ -240,29 +240,8 @@ struct AddCaloriesView: View {
                     // Save current input before finishing
                     saveCurrentValue()
                     
-                    // Add all tracked nutrients to the model
-                    var anythingAdded = false
-                    
-                    if caloriesValue > 0 {
-                        calorieModel.addCalories(amount: caloriesValue, mealType: selectedMealType)
-                        anythingAdded = true
-                    }
-                    
-                    if proteinValue > 0 || carbsValue > 0 || fatValue > 0 {
-                        calorieModel.addMacros(
-                            protein: proteinValue,
-                            carbs: carbsValue,
-                            fat: fatValue,
-                            mealType: selectedMealType
-                        )
-                        anythingAdded = true
-                    }
-                    
-                    if anythingAdded {
-                        // Provide haptic feedback
-                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                        generator.impactOccurred()
-                    }
+                    // Add the nutrients to the model
+                    addNutrientsToModel()
                     
                     dismiss()
                 }) {
@@ -322,6 +301,36 @@ struct AddCaloriesView: View {
         
         // Clear the current value for the next input
         currentValue = ""
+    }
+    
+    // Add the accumulated nutrients to the model
+    private func addNutrientsToModel() {
+        var anythingAdded = false
+        
+        // Add only calories if that's all that was entered
+        if caloriesValue > 0 && (proteinValue == 0 && carbsValue == 0 && fatValue == 0) {
+            calorieModel.addCalories(amount: caloriesValue, mealType: selectedMealType)
+            anythingAdded = true
+        }
+        
+        // Add macros (will also calculate calories from macros)
+        if proteinValue > 0 || carbsValue > 0 || fatValue > 0 {
+            calorieModel.addMacros(
+                protein: proteinValue,
+                carbs: carbsValue,
+                fat: fatValue,
+                mealType: selectedMealType
+            )
+            anythingAdded = true
+        }
+        
+        if anythingAdded {
+            calorieModel.saveData()
+            
+            // Provide haptic feedback
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+        }
     }
 }
 

@@ -13,6 +13,12 @@ struct ContentView: View {
     @State private var selectedTab: TabItem = .calories
     @State private var showingAddSheet = false
     
+    // Track the state before adding new nutrients
+    @State private var previousCalorieTotal: Int = 0
+    @State private var previousProteinTotal: Double = 0.0
+    @State private var previousCarbsTotal: Double = 0.0
+    @State private var previousFatTotal: Double = 0.0
+    
     // Tab bar height including safe area
     private let tabBarHeight: CGFloat = 80
     
@@ -37,6 +43,10 @@ struct ContentView: View {
                 if selectedTab == .calories {
                     CaloriesView(calorieModel: calorieModel)
                         .transition(.opacity)
+                        .onAppear {
+                            // Store current nutrition values when view appears
+                            storeCurrentNutritionValues()
+                        }
                 }
                 
                 // Hydration Tab
@@ -52,6 +62,8 @@ struct ContentView: View {
             SimplifiedTabBarWithContextualAdd(
                 selectedTab: $selectedTab,
                 addAction: {
+                    // Store current totals before adding
+                    storeCurrentNutritionValues()
                     showingAddSheet = true
                 }
             )
@@ -94,6 +106,14 @@ struct ContentView: View {
             calorieModel.saveData()
             hydrationModel.saveData()
         }
+    }
+    
+    // Helper function to store current nutrition values
+    private func storeCurrentNutritionValues() {
+        previousCalorieTotal = calorieModel.consumedCalories
+        previousProteinTotal = calorieModel.consumedProtein
+        previousCarbsTotal = calorieModel.consumedCarbs
+        previousFatTotal = calorieModel.consumedFat
     }
 }
 

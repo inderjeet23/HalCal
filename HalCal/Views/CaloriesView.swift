@@ -102,7 +102,7 @@ struct CaloriesView: View {
                     MealCategoryCard(
                         icon: "☕️",
                         title: "Breakfast",
-                        calories: getMealCalories(for: .breakfast),
+                        calories: calorieModel.getMealCalories(for: .breakfast),
                         color: Color(red: 0.9, green: 0.9, blue: 1.0) // Light blue
                     ) {
                         // Add breakfast action
@@ -111,7 +111,7 @@ struct CaloriesView: View {
                     MealCategoryCard(
                         icon: "🥗",
                         title: "Lunch",
-                        calories: getMealCalories(for: .lunch),
+                        calories: calorieModel.getMealCalories(for: .lunch),
                         color: Color(red: 0.9, green: 1.0, blue: 0.9) // Light green
                     ) {
                         // Add lunch action
@@ -120,7 +120,7 @@ struct CaloriesView: View {
                     MealCategoryCard(
                         icon: "🍲",
                         title: "Dinner",
-                        calories: getMealCalories(for: .dinner),
+                        calories: calorieModel.getMealCalories(for: .dinner),
                         color: Color(red: 0.9, green: 1.0, blue: 1.0) // Light cyan
                     ) {
                         // Add dinner action
@@ -129,13 +129,33 @@ struct CaloriesView: View {
                     MealCategoryCard(
                         icon: "🥨",
                         title: "Snack",
-                        calories: getMealCalories(for: .snack),
+                        calories: calorieModel.getMealCalories(for: .snack),
                         color: Color(red: 1.0, green: 0.9, blue: 1.0) // Light purple
                     ) {
                         // Add snack action
                     }
                 }
                 .padding(.horizontal)
+                
+                // Recent meals section
+                if hasAnyMeals() {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Today's Meals")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal)
+                        
+                        VStack(spacing: 12) {
+                            ForEach(getAllMealsSorted()) { meal in
+                                MealItemRow(meal: meal, onDelete: {
+                                    deleteMeal(meal)
+                                })
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.top, 8)
+                }
                 
                 // Add extra padding at bottom to ensure content isn't hidden by tab bar
                 Color.clear.frame(height: 100)
@@ -177,19 +197,99 @@ struct CaloriesView: View {
         }
     }
     
-    // Get calories for a specific meal type
-    private func getMealCalories(for type: MealType) -> Int {
-        // In a real implementation, this would fetch from the model
-        // For now, return sample data
+    // Check if there are any meals
+    private func hasAnyMeals() -> Bool {
+        let allMeals = getAllMealsSorted()
+        return !allMeals.isEmpty
+    }
+    
+    // Get all meals sorted by time (most recent first)
+    private func getAllMealsSorted() -> [Meal] {
+        let allMeals = MealType.allCases.flatMap { calorieModel.meals[$0] ?? [] }
+        return allMeals.sorted(by: { $0.time > $1.time })
+    }
+    
+    // Delete a meal
+    private func deleteMeal(_ meal: Meal) {
+        // Remove the meal from the model
+        if var meals = calorieModel.meals[meal.type], let index = meals.firstIndex(where: { $0.id == meal.id }) {
+            // Subtract the meal's nutrients from the total
+            calorieModel.consumedCalories -= meal.calories
+            calorieModel.consumedProtein -= meal.protein
+            calorieModel.consumedCarbs -= meal.carbs
+            calorieModel.consumedFat -= meal.fat
+            
+            // Remove the meal from the array
+            meals.remove(at: index)
+            calorieModel.meals[meal.type] = meals
+            
+            // Save the updated data
+            calorieModel.saveData()
+        }
+    }
+}
+
+// Row for a meal item
+struct MealItemRow: View {
+    let meal: Meal
+    let onDelete: () -> Void
+    
+    private var timeFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter
+    }
+    
+    var body: some View {
+        HStack {
+            // Circle with meal type icon
+            Circle()
+                .fill(Constants.Colors.calorieOrange.opacity(0.2))
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Image(systemName: mealTypeIcon(for: meal.type))
+                        .foregroundColor(Constants.Colors.calorieOrange)
+                )
+            
+            VStack(alignment: .leading) {
+                Text(meal.name)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                
+                Text("\(meal.calories) calories • \(timeFormatter.string(from: meal.time))")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                
+                // Show macros if they exist
+                if meal.protein > 0 || meal.carbs > 0 || meal.fat > 0 {
+                    Text("P: \(Int(meal.protein))g • C: \(Int(meal.carbs))g • F: \(Int(meal.fat))g")
+                        .font(.caption)
+                        .foregroundColor(Constants.Colors.turquoise)
+                }
+            }
+            
+            Spacer()
+            
+            // Delete button
+            Button(action: onDelete) {
+                Image(systemName: "trash")
+                    .foregroundColor(.gray)
+                    .font(.system(size: 16))
+                    .padding(8)
+            }
+        }
+        .padding(12)
+        .background(Color.black.opacity(0.2))
+        .cornerRadius(12)
+    }
+    
+    // Get icon for meal type
+    private func mealTypeIcon(for type: MealType) -> String {
         switch type {
-        case .breakfast:
-            return 243
-        case .lunch:
-            return 335
-        case .dinner:
-            return 0
-        case .snack:
-            return 0
+        case .breakfast: return "sunrise.fill"
+        case .lunch: return "sun.max.fill"
+        case .dinner: return "sunset.fill"
+        case .snack: return "cup.and.saucer.fill"
         }
     }
 }
