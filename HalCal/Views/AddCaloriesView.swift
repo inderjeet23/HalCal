@@ -17,8 +17,33 @@ enum MealType: String, CaseIterable, Identifiable {
     var id: String { self.rawValue }
 }
 
-enum InputMode {
-    case calories, protein, carbs, fat
+enum InputMode: String, CaseIterable, Identifiable {
+    case calories = "Calories"
+    case protein = "Protein"
+    case carbs = "Carbs"
+    case fat = "Fat"
+    
+    var id: String { self.rawValue }
+    
+    var shortLabel: String {
+        switch self {
+        case .calories: return "Cal"
+        case .protein: return "P"
+        case .carbs: return "C"
+        case .fat: return "F"
+        }
+    }
+    
+    var unit: String {
+        return self == .calories ? "" : "g"
+    }
+    
+    var color: Color {
+        switch self {
+        case .calories: return Constants.Colors.calorieOrange
+        case .protein, .carbs, .fat: return Constants.Colors.turquoise
+        }
+    }
 }
 
 struct AddCaloriesView: View {
@@ -30,7 +55,7 @@ struct AddCaloriesView: View {
     @State private var fatAmount: String = ""
     @State private var keypadButtonStates: [String: Bool] = [:]
     @State private var selectedMealType: MealType = .breakfast
-    @State private var showMacros: Bool = false
+    @State private var showMacros: Bool = true
     @State private var currentInputMode: InputMode = .calories
     
     // Mock data for already logged meals - replace with actual data later
@@ -95,100 +120,16 @@ struct AddCaloriesView: View {
                 mealTypeSelector()
                     .padding(.horizontal, Constants.Layout.screenMargin)
                 
+                // Macro mode selector
+                macroTabSelector()
+                    .padding(.horizontal, Constants.Layout.screenMargin)
+                    .padding(.top, 8)
+                
                 // Display panel
-                ZStack {
-                    // Panel background
-                    RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                        .fill(Constants.Colors.surfaceMid)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                                .stroke(Constants.Gradients.metallicRim, lineWidth: Constants.Layout.borderWidth)
-                        )
-                        .shadow(
-                            color: Constants.Shadows.insetShadow.color,
-                            radius: Constants.Shadows.insetShadow.radius,
-                            x: Constants.Shadows.insetShadow.x,
-                            y: Constants.Shadows.insetShadow.y
-                        )
-                    
-                    VStack {
-                        // Display text for current input mode
-                        if currentInputMode == .calories {
-                            HStack {
-                                Text(calorieAmount.isEmpty ? "0" : calorieAmount)
-                                    .font(.system(size: 64, weight: .bold, design: .monospaced))
-                                    .foregroundColor(Constants.Colors.amber)
-                                    .shadow(color: Constants.Colors.amber.opacity(0.6), radius: 2, x: 0, y: 0)
-                                
-                                Spacer()
-                                
-                                // Toggle button for macros
-                                Button(action: {
-                                    withAnimation(.spring()) {
-                                        showMacros.toggle()
-                                    }
-                                }) {
-                                    Image(systemName: showMacros ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(Constants.Colors.blue)
-                                }
-                            }
-                        } else {
-                            let (value, label) = currentInputValue
-                            HStack {
-                                Text(value.isEmpty ? "0" : value)
-                                    .font(.system(size: 54, weight: .bold, design: .monospaced))
-                                    .foregroundColor(macroColor)
-                                
-                                Text("g")
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(macroColor.opacity(0.8))
-                                    .offset(y: 8)
-                                
-                                Spacer()
-                                
-                                Text(label)
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(macroColor)
-                            }
-                        }
-                        
-                        // Macro inputs when expanded
-                        if showMacros && currentInputMode == .calories {
-                            HStack(spacing: 15) {
-                                macroInputField(label: "P", value: proteinAmount, color: Constants.Colors.turquoise, action: { currentInputMode = .protein })
-                                macroInputField(label: "C", value: carbsAmount, color: Constants.Colors.turquoise, action: { currentInputMode = .carbs })
-                                macroInputField(label: "F", value: fatAmount, color: Constants.Colors.turquoise, action: { currentInputMode = .fat })
-                            }
-                            .padding(.top, 8)
-                        }
-                    }
-                    .padding()
-                }
-                .frame(height: showMacros && currentInputMode == .calories ? 160 : 100)
-                .padding(.horizontal, Constants.Layout.screenMargin)
-                // Add swipe gesture to switch between input modes
-                .gesture(
-                    DragGesture(minimumDistance: 20, coordinateSpace: .local)
-                        .onEnded { value in
-                            let horizontalAmount = value.translation.width
-                            let verticalAmount = value.translation.height
-                            
-                            // Only process horizontal swipes
-                            if abs(horizontalAmount) > abs(verticalAmount) {
-                                withAnimation(.spring()) {
-                                    if horizontalAmount < 0 {
-                                        // Swipe left - move to next mode
-                                        switchToNextMode()
-                                    } else {
-                                        // Swipe right - move to previous mode
-                                        switchToPreviousMode()
-                                    }
-                                }
-                                HapticManager.shared.impact(style: .light)
-                            }
-                        }
-                )
+                displayPanel()
+                    .padding(.horizontal, Constants.Layout.screenMargin)
+                
+                Spacer(minLength: 30) // Push keypad down
                 
                 // Large keypad
                 VStack(spacing: Constants.Layout.componentSpacing) {
@@ -239,7 +180,7 @@ struct AddCaloriesView: View {
                                 .fill(Constants.Gradients.metallicSurface)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                                        .stroke(currentInputMode == .calories ? Constants.Colors.blue : macroColor, lineWidth: Constants.Layout.borderWidth)
+                                        .stroke(currentInputMode.color, lineWidth: Constants.Layout.borderWidth)
                                 )
                                 .shadow(
                                     color: Constants.Shadows.buttonShadow.color,
@@ -297,26 +238,79 @@ struct AddCaloriesView: View {
         .frame(height: 46)
     }
     
-    // Macro input field component
-    private func macroInputField(label: String, value: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack(spacing: 2) {
-                Text(label)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white.opacity(0.8))
-                
-                Text(value.isEmpty ? "0" : value)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white)
-                
-                Text("g")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.8))
+    // Macro tab selector
+    private func macroTabSelector() -> some View {
+        HStack(spacing: 4) {
+            ForEach(InputMode.allCases) { mode in
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        currentInputMode = mode
+                    }
+                    HapticManager.shared.impact(style: .light)
+                }) {
+                    HStack(spacing: 4) {
+                        Text(mode.shortLabel)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(currentInputMode == mode ? .white : Color.gray)
+                    }
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(currentInputMode == mode ? mode.color : Constants.Colors.surfaceLight)
+                    .cornerRadius(Constants.Layout.cornerRadius)
+                }
             }
-            .padding(.vertical, 6)
-            .frame(maxWidth: .infinity)
-            .background(color.opacity(currentInputMode == InputMode(rawValue: label.lowercased()) ? 1 : 0.7))
-            .cornerRadius(8)
+        }
+        .frame(height: 40)
+    }
+    
+    // Display panel
+    private func displayPanel() -> some View {
+        ZStack {
+            // Panel background
+            RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
+                .fill(Constants.Colors.surfaceMid)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
+                        .stroke(Constants.Gradients.metallicRim, lineWidth: Constants.Layout.borderWidth)
+                )
+                .shadow(
+                    color: Constants.Shadows.insetShadow.color,
+                    radius: Constants.Shadows.insetShadow.radius,
+                    x: Constants.Shadows.insetShadow.x,
+                    y: Constants.Shadows.insetShadow.y
+                )
+            
+            // Display text based on current input mode
+            HStack(alignment: .center) {
+                Spacer()
+                
+                let value = valueForMode(currentInputMode)
+                Text(value.isEmpty ? "0" : value)
+                    .font(.system(size: 64, weight: .bold, design: .monospaced))
+                    .foregroundColor(currentInputMode.color)
+                    .shadow(color: currentInputMode.color.opacity(0.6), radius: 2, x: 0, y: 0)
+                
+                if currentInputMode != .calories {
+                    Text(currentInputMode.unit)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(currentInputMode.color.opacity(0.8))
+                        .offset(y: 8)
+                }
+                
+                Spacer()
+            }
+            .padding()
+        }
+        .frame(height: 100)
+    }
+    
+    // Helper to get current value based on input mode
+    private func valueForMode(_ mode: InputMode) -> String {
+        switch mode {
+        case .calories: return calorieAmount
+        case .protein: return proteinAmount
+        case .carbs: return carbsAmount
+        case .fat: return fatAmount
         }
     }
     
@@ -336,7 +330,7 @@ struct AddCaloriesView: View {
                 .aspectRatio(1.0, contentMode: .fit)
                 .background(
                     RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
-                        .fill(Constants.Gradients.metallicSurface)
+                        .fill(Constants.Colors.surfaceLight)
                         .overlay(
                             RoundedRectangle(cornerRadius: Constants.Layout.cornerRadius)
                                 .stroke(
@@ -438,56 +432,7 @@ struct AddCaloriesView: View {
         }
     }
     
-    private func switchToNextMode() {
-        switch currentInputMode {
-        case .calories:
-            currentInputMode = .protein
-        case .protein:
-            currentInputMode = .carbs
-        case .carbs:
-            currentInputMode = .fat
-        case .fat:
-            currentInputMode = .calories
-        }
-    }
-    
-    private func switchToPreviousMode() {
-        switch currentInputMode {
-        case .calories:
-            currentInputMode = .fat
-        case .protein:
-            currentInputMode = .calories
-        case .carbs:
-            currentInputMode = .protein
-        case .fat:
-            currentInputMode = .carbs
-        }
-    }
-    
     // Computed properties
-    
-    private var currentInputValue: (String, String) {
-        switch currentInputMode {
-        case .calories:
-            return (calorieAmount, "CAL")
-        case .protein:
-            return (proteinAmount, "PROTEIN")
-        case .carbs:
-            return (carbsAmount, "CARBS")
-        case .fat:
-            return (fatAmount, "FAT")
-        }
-    }
-    
-    private var macroColor: Color {
-        switch currentInputMode {
-        case .protein, .carbs, .fat:
-            return Constants.Colors.turquoise
-        default:
-            return Constants.Colors.amber
-        }
-    }
-    
     private var addButtonText: String {
         switch currentInputMode {
         case .calories:
@@ -511,18 +456,6 @@ struct AddCaloriesView: View {
             return carbsAmount.isEmpty || Int(carbsAmount) == 0
         case .fat:
             return fatAmount.isEmpty || Int(fatAmount) == 0
-        }
-    }
-}
-
-// Extension to convert string to InputMode
-extension InputMode {
-    init?(rawValue: String) {
-        switch rawValue.lowercased() {
-        case "p": self = .protein
-        case "c": self = .carbs
-        case "f": self = .fat
-        default: return nil
         }
     }
 }
