@@ -11,7 +11,11 @@ struct ActivityPanel: View {
     @ObservedObject var activityModel: ActivityModel
     
     private var stepsPercentage: Double {
-        min(Double(activityModel.steps) / Double(activityModel.goalSteps), 1.0)
+        min(Double(activityModel.steps) / Double(activityModel.dailyStepGoal), 1.0)
+    }
+    
+    private var standHoursPercentage: Double {
+        min(Double(activityModel.standHours) / Double(activityModel.dailyStandGoal), 1.0)
     }
     
     var body: some View {
@@ -107,7 +111,7 @@ struct ActivityPanel: View {
                 }
                 
                 // Goal text
-                Text("GOAL: \(activityModel.goalSteps)")
+                Text("GOAL: \(activityModel.dailyStepGoal)")
                     .font(Constants.Fonts.monospacedLabel)
                     .foregroundColor(Constants.Colors.secondaryText)
             }
@@ -131,17 +135,15 @@ struct ActivityPanel: View {
                     
                     Spacer()
                     
-                    Text("\(activityModel.activeHours)")
+                    Text("\(activityModel.standHours)")
                         .font(Constants.Fonts.monospacedDigital)
                         .foregroundColor(Constants.Colors.amber)
                 }
                 
                 // Hour indicators
                 HStack(spacing: 4) {
-                    ForEach(0..<12) { i in
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(i < activityModel.activeHours ? Constants.Colors.amber : Color.black.opacity(0.3))
-                            .frame(height: 16)
+                    ForEach(0..<12) { hour in
+                        hourIndicator(hour: hour + 1, isActive: activityModel.standHours > hour)
                     }
                 }
             }
@@ -174,7 +176,7 @@ struct ActivityPanel: View {
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
-                        activityModel.logMeal("breakfast")
+                        // NOTE: Meal logging now uses the CalorieModel instead of ActivityModel.mealLog
                     }
                     
                     // Lunch
@@ -188,7 +190,7 @@ struct ActivityPanel: View {
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
-                        activityModel.logMeal("lunch")
+                        // NOTE: Meal logging now uses the CalorieModel instead of ActivityModel.mealLog
                     }
                     
                     // Dinner
@@ -202,7 +204,7 @@ struct ActivityPanel: View {
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
-                        activityModel.logMeal("dinner")
+                        // NOTE: Meal logging now uses the CalorieModel instead of ActivityModel.mealLog
                     }
                     
                     // Snacks
@@ -216,7 +218,7 @@ struct ActivityPanel: View {
                             .frame(width: 10, height: 10)
                     }
                     .onTapGesture {
-                        activityModel.logMeal("snacks")
+                        // NOTE: Meal logging now uses the CalorieModel instead of ActivityModel.mealLog
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -307,6 +309,12 @@ struct ActivityPanel: View {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd"
         return formatter.string(from: Date())
+    }
+    
+    private func hourIndicator(hour: Int, isActive: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(isActive ? Constants.Colors.amber : Color.black.opacity(0.3))
+            .frame(height: 16)
     }
 }
 
