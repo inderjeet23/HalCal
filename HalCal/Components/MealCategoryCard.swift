@@ -98,5 +98,4 @@ struct MealCategoryCard: View {
     }
     .padding()
     .background(Color.black)
-    .previewLayout(.sizeThatFits)
 } 

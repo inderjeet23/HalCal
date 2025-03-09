@@ -8,15 +8,6 @@
 import SwiftUI
 import UIKit
 
-enum MealType: String, CaseIterable, Identifiable {
-    case breakfast = "Breakfast"
-    case lunch = "Lunch"
-    case dinner = "Dinner"
-    case snack = "Snack"
-    
-    var id: String { self.rawValue }
-}
-
 enum InputMode: String, CaseIterable, Identifiable {
     case calories = "Calories"
     case protein = "Protein"

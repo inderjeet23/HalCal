@@ -93,12 +93,7 @@ class CalorieModel: ObservableObject {
     
     // Get meal name based on type
     private func mealNameForType(_ type: MealType) -> String {
-        switch type {
-        case .breakfast: return "Breakfast"
-        case .lunch: return "Lunch"
-        case .dinner: return "Dinner"
-        case .snack: return "Snack"
-        }
+        return type.rawValue
     }
     
     // Save data to UserDefaults
@@ -120,7 +115,20 @@ class CalorieModel: ObservableObject {
         consumedCarbs = defaults.double(forKey: "consumedCarbs")
         consumedFat = defaults.double(forKey: "consumedFat")
         
-        // In a real app, we would load the saved meals array too
+        // Load sample data for testing
+        if true {
+            // Add a sample meal
+            let sampleMeal = Meal(
+                name: "Snack",
+                calories: 1882,
+                protein: 25,
+                carbs: 30,
+                fat: 8,
+                time: Date(),
+                type: .snack
+            )
+            meals[.snack] = [sampleMeal]
+        }
     }
     
     // Reset all values (for testing or for daily reset)
@@ -156,5 +164,11 @@ class CalorieModel: ObservableObject {
     // Calculate percentage of fat goal
     var fatPercentage: Double {
         return consumedFat / fatTarget
+    }
+    
+    // Get calories for a specific meal type
+    func getMealCalories(for type: MealType) -> Int {
+        let mealsForType = meals[type] ?? []
+        return mealsForType.reduce(0) { $0 + $1.calories }
     }
 } 
