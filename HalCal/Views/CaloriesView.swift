@@ -14,6 +14,20 @@ struct MacroProgressView: View {
     var grams: Double
     var color: Color
     
+    private var safeProgress: Double {
+        if progress.isNaN || progress.isInfinite {
+            return 0.0
+        }
+        return min(progress, 1.0)
+    }
+    
+    private var percentText: String {
+        if progress.isNaN || progress.isInfinite {
+            return "0%"
+        }
+        return "\(Int(progress * 100))%"
+    }
+    
     var body: some View {
         VStack(spacing: 4) {
             // Circular progress
@@ -25,7 +39,7 @@ struct MacroProgressView: View {
                 
                 // Progress circle
                 Circle()
-                    .trim(from: 0, to: min(progress, 1.0))
+                    .trim(from: 0, to: safeProgress)
                     .stroke(color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .frame(width: 50, height: 50)
                     .rotationEffect(.degrees(-90))
@@ -35,7 +49,7 @@ struct MacroProgressView: View {
                     Text(label)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white)
-                    Text("\(Int(progress * 100))%")
+                    Text(percentText)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                 }
@@ -55,33 +69,44 @@ struct MacroNutrientsView: View {
     @ObservedObject var calorieModel: CalorieModel
     
     var body: some View {
-        HStack(spacing: 30) {
-            // Protein
-            MacroProgressView(
-                progress: calorieModel.consumedProtein / calorieModel.proteinTarget,
-                label: "P",
-                grams: calorieModel.consumedProtein,
-                color: Constants.Colors.turquoise
-            )
-            
-            // Carbs
-            MacroProgressView(
-                progress: calorieModel.consumedCarbs / calorieModel.carbTarget,
-                label: "C",
-                grams: calorieModel.consumedCarbs,
-                color: Color.purple
-            )
-            
-            // Fat
-            MacroProgressView(
-                progress: calorieModel.consumedFat / calorieModel.fatTarget,
-                label: "F",
-                grams: calorieModel.consumedFat,
-                color: Color.yellow
-            )
+        VStack(spacing: 8) {
+            // Add a title to make it more visible
+            Text("Macros")
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+            HStack(spacing: 30) {
+                // Protein
+                MacroProgressView(
+                    progress: calorieModel.consumedProtein / max(calorieModel.proteinTarget, 1),
+                    label: "P",
+                    grams: calorieModel.consumedProtein,
+                    color: Constants.Colors.turquoise
+                )
+                
+                // Carbs
+                MacroProgressView(
+                    progress: calorieModel.consumedCarbs / max(calorieModel.carbTarget, 1),
+                    label: "C",
+                    grams: calorieModel.consumedCarbs,
+                    color: Color.purple
+                )
+                
+                // Fat
+                MacroProgressView(
+                    progress: calorieModel.consumedFat / max(calorieModel.fatTarget, 1),
+                    label: "F",
+                    grams: calorieModel.consumedFat,
+                    color: Color.yellow
+                )
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
         }
-        .padding(.vertical, 8)
-        .background(Color.clear)
+        .padding(10)
+        .background(Color.black.opacity(0.2))
+        .cornerRadius(12)
     }
 }
 
@@ -169,10 +194,10 @@ struct CaloriesView: View {
                 .frame(height: 220)
                 .padding(.vertical, 10)
                 
-                // Add macro nutrients view here
+                // Add macro nutrients view here with more prominent placement
                 MacroNutrientsView(calorieModel: calorieModel)
                     .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.vertical, 12)
                 
                 // Tab selector for this view
                 HStack(spacing: 24) {
