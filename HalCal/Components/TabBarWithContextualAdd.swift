@@ -25,43 +25,58 @@ struct TabBarWithContextualAdd: View {
     let addAction: () -> Void
     
     var body: some View {
-        HStack {
-            // Equal spacing for all icons
-            Spacer(minLength: 30)
+        ZStack {
+            // Background
+            Color.white
+                .shadow(color: Color.black.opacity(0.1), radius: 3, y: -2)
             
-            // Calories icon
-            Button(action: { 
-                withAnimation(.easeInOut) {
-                    selectedTab = .calories
+            // Tab bar items
+            HStack(spacing: 0) {
+                // Left tab (Calories)
+                Button(action: { 
+                    withAnimation(.easeInOut) {
+                        selectedTab = .calories
+                    }
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.5))
+                        
+                        Text("Calories")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-            }) {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(selectedTab == .calories ? Constants.Colors.calorieOrange : Color.gray.opacity(0.5))
-                    .frame(width: 60)
-            }
-            
-            Spacer()
-            
-            // Hydration icon
-            Button(action: { 
-                withAnimation(.easeInOut) {
-                    selectedTab = .hydration
+                
+                // Spacer for center add button
+                Spacer()
+                    .frame(width: 70)
+                
+                // Right tab (Hydration)
+                Button(action: { 
+                    withAnimation(.easeInOut) {
+                        selectedTab = .hydration
+                    }
+                }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "drop.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(selectedTab == .hydration ? Constants.Colors.turquoise : Color.gray.opacity(0.5))
+                        
+                        Text("Hydration")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(selectedTab == .hydration ? Constants.Colors.turquoise : Color.gray.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-            }) {
-                Image(systemName: "drop.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(selectedTab == .hydration ? Constants.Colors.turquoise : Color.gray.opacity(0.5))
-                    .frame(width: 60)
             }
+            .padding(.horizontal, 40)
+            .padding(.vertical, 12)
+            .padding(.bottom, 30) // Extra padding for bottom safe area
             
-            Spacer(minLength: 30)
-        }
-        .padding(.top, 16)
-        .padding(.bottom, 30) // Extra padding for bottom safe area
-        .background(Color.white)
-        .overlay(
-            // Centered add button
+            // Centered add button (always in the middle)
             Button(action: addAction) {
                 ZStack {
                     Circle()
@@ -75,9 +90,9 @@ struct TabBarWithContextualAdd: View {
                         .foregroundColor(.white)
                 }
             }
-            .offset(y: -50), // Position button properly above tab bar
-            alignment: .top
-        )
+            .offset(y: -30) // Position button properly above tab bar
+        }
+        .frame(height: 100) // Set the overall height of the tab bar
     }
 }
 
@@ -86,10 +101,13 @@ struct TabBarWithContextualAdd: View {
         Constants.Colors.background
             .ignoresSafeArea()
         
-        TabBarWithContextualAdd(
-            selectedTab: .constant(.calories),
-            addAction: {}
-        )
+        VStack {
+            Spacer()
+            TabBarWithContextualAdd(
+                selectedTab: .constant(.calories),
+                addAction: {}
+            )
+        }
     }
     .preferredColorScheme(.dark)
 } 

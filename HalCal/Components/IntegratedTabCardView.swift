@@ -32,6 +32,9 @@ struct IntegratedTabCardView<CardContent: View>: View {
     var halfPosition: CGFloat = 200
     var expandedPosition: CGFloat = 450
     
+    // Tab bar height
+    private let tabBarHeight: CGFloat = 100
+    
     // Configure physics
     var velocityThreshold: CGFloat = 300
     var resistanceFactor: CGFloat = 0.3
@@ -49,7 +52,7 @@ struct IntegratedTabCardView<CardContent: View>: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
-                // Card content - positioned above tab bar when visible
+                // Card content - slides up from behind tab bar when visible
                 if offset > 0 {
                     VStack(spacing: 0) {
                         // Handle indicator
@@ -62,24 +65,21 @@ struct IntegratedTabCardView<CardContent: View>: View {
                         
                         // Dynamic card content
                         cardContent
-                            .padding(.bottom, 24)
+                            .padding(.bottom, tabBarHeight) // Add padding to account for tab bar
                     }
                     .background(Color.white)
                     .cornerRadius(Constants.Layout.cornerRadius, corners: [.topLeft, .topRight])
                     .shadow(color: Color.black.opacity(0.1), radius: 4, y: -2)
                     .offset(y: -offset)
-                    .zIndex(1)
+                    .zIndex(0) // Place behind tab bar
                 }
                 
-                // Tab bar with plus button - always visible at bottom
+                // Tab bar with plus button - always visible at bottom on top of card
                 TabBarWithContextualAdd(
                     selectedTab: $selectedTab,
                     addAction: addAction
                 )
-                .background(Color.white)
-                .cornerRadius(Constants.Layout.cornerRadius, corners: [.topLeft, .topRight])
-                .shadow(color: Color.black.opacity(0.05), radius: 3, y: -2)
-                .zIndex(0)
+                .zIndex(1) // Make sure tab bar is always on top
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottom)
             .gesture(

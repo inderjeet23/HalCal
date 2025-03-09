@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var cardPosition: CardPosition = .collapsed
     
     // Tab bar height including safe area
-    private let tabBarHeight: CGFloat = 90
+    private let tabBarHeight: CGFloat = 100
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -50,7 +50,7 @@ struct ContentView: View {
             .ignoresSafeArea(.keyboard)
             .padding(.bottom, tabBarHeight) // Add padding to make space for tab bar
             
-            // Integrated tab and card component
+            // Integrated tab and card component with improved layout
             IntegratedTabCardView(
                 selectedTab: $selectedTab,
                 cardPosition: $cardPosition,
